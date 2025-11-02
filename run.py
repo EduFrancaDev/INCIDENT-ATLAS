@@ -29,7 +29,8 @@ def init_db():
         Genero VARCHAR(20),
         Tipo_Trabalhador VARCHAR(50),
         Risco_Critico VARCHAR(200),
-        Descricao TEXT
+        Descricao TEXT,
+        Parte_Corpo VARCHAR(50)
     )
     """)
     result = db.execute("SELECT COUNT(*) FROM acidentes").fetchall()
@@ -70,14 +71,15 @@ def get_accidents():
             Genero as gender,
             Tipo_Trabalhador as employeeType,
             Risco_Critico as criticalRisk,
-            Descricao as description
+            Descricao as description,
+            Parte_Corpo as bodyPart
         FROM acidentes
         ORDER BY Data DESC
     """).fetchall()
     
     # Converter para lista de dicionários
     columns = ['id', 'date', 'country', 'local', 'sector', 'accidentLevel', 
-               'potentialLevel', 'gender', 'employeeType', 'criticalRisk', 'description']
+               'potentialLevel', 'gender', 'employeeType', 'criticalRisk', 'description', 'bodyPart']
     
     accidents = []
     for row in result:
@@ -89,9 +91,6 @@ def get_accidents():
                 accident[col] = value.isoformat() if hasattr(value, 'isoformat') else str(value)
             else:
                 accident[col] = value
-        
-        # Mapear parte do corpo baseada na descrição
-        accident['bodyPart'] = extract_body_part(accident.get('description', ''))
         accidents.append(accident)
     
     return jsonify(accidents)
@@ -168,12 +167,21 @@ def get_statistics():
         LIMIT 10
     """).fetchall()
     
+    # Estatísticas por parte do corpo
+    bodypart_stats = db.execute("""
+        SELECT Parte_Corpo, COUNT(*) as count
+        FROM acidentes
+        GROUP BY Parte_Corpo
+        ORDER BY count DESC
+    """).fetchall()
+    
     return jsonify({
         'gender': [{'gender': row[0], 'count': row[1]} for row in gender_stats],
         'countries': [{'country': row[0], 'count': row[1]} for row in country_stats],
         'sectors': [{'sector': row[0], 'count': row[1]} for row in sector_stats],
         'months': [{'month': row[0], 'count': row[1]} for row in month_stats],
-        'locations': [{'local': row[0], 'country': row[1], 'count': row[2]} for row in location_stats]
+        'locations': [{'local': row[0], 'country': row[1], 'count': row[2]} for row in location_stats],
+        'bodyParts': [{'bodyPart': row[0], 'count': row[1]} for row in bodypart_stats]
     })
 
 if __name__ == '__main__':

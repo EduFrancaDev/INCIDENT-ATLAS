@@ -65,7 +65,8 @@ def atualizar_banco_duckdb():
             Genero VARCHAR(20),
             Tipo_Trabalhador VARCHAR(50),
             Risco_Critico VARCHAR(200),
-            Descricao TEXT
+            Descricao TEXT,
+            Parte_Corpo VARCHAR(50)
         )
     """)
     print(f"   ✅ Tabela criada")
