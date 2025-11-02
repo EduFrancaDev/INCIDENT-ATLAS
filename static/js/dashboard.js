@@ -115,8 +115,8 @@ function toggleGenderFilter(gender) {
 function updateDashboard() {
   // Filter data
   state.filteredData = allAccidents.filter(item => {
-    const genderMatch = (item.gender === 'Male' && state.filters.gender.male) ||
-                       (item.gender === 'Female' && state.filters.gender.female);
+    const genderMatch = (item.gender === 'Homem' && state.filters.gender.male) ||
+                       (item.gender === 'Mulher' && state.filters.gender.female);
     const countryMatch = state.filters.countries.includes(item.country);
     const itemDate = new Date(item.date);
     const dateMatch = itemDate >= state.filters.dateRange.start && 
@@ -133,8 +133,8 @@ function updateDashboard() {
 
 function updateFilterCards() {
   const total = state.filteredData.length;
-  const women = state.filteredData.filter(d => d.gender === 'Female').length;
-  const men = state.filteredData.filter(d => d.gender === 'Male').length;
+  const women = state.filteredData.filter(d => d.gender === 'Mulher').length;
+  const men = state.filteredData.filter(d => d.gender === 'Homem').length;
 
   document.getElementById('womenCount').textContent = women;
   document.getElementById('womenPercent').textContent = total ? `${Math.round(women/total*100)}%` : '0%';
@@ -209,7 +209,7 @@ function createAccidentPotentialChart() {
   
   const sectorData = {
     'Mineração': 0,
-    'Metais': 0,
+    'Metalurgia': 0,
     'Outros': 0
   };
 
@@ -321,7 +321,7 @@ function updateMonthChart(range) {
 function updatePotentialChart() {
   const sectorData = {
     'Mineração': 0,
-    'Metais': 0,
+    'Metalurgia': 0,
     'Outros': 0
   };
 
@@ -384,9 +384,41 @@ function updateBodyMap() {
     'trunk': 0
   };
 
+  // Mapear partes do corpo em português para as partes do SVG
+  const bodyPartMapping = {
+    'Face': 'face',
+    'Cabeça': 'face',
+    'Olhos': 'face',
+    'Olho Esquerdo': 'face',
+    'Olho Direito': 'face',
+    'Pescoço': 'neck',
+    'Tronco': 'trunk',
+    'Tórax': 'trunk',
+    'Abdômen': 'trunk',
+    'Costas': 'trunk',
+    'Mão Esquerda': 'hands',
+    'Mão Direita': 'hands',
+    'Mãos': 'hands',
+    'Dedo': 'hands',
+    'Dedos': 'hands',
+    'Braço Esquerdo': 'left-arm',
+    'Braço Direito': 'right-arm',
+    'Perna Esquerda': 'left-leg',
+    'Perna Direita': 'right-leg',
+    'Pernas': 'right-leg',
+    'Pé Esquerdo': 'feet',
+    'Pé Direito': 'feet',
+    'Pés': 'feet',
+    'Tornozelo': 'feet',
+    'Joelho': 'right-leg'
+  };
+
   state.filteredData.forEach(item => {
-    if (item.bodyPart && bodyPartCounts[item.bodyPart] !== undefined) {
-      bodyPartCounts[item.bodyPart]++;
+    if (item.bodyPart && item.bodyPart !== 'Não especificado') {
+      const svgPart = bodyPartMapping[item.bodyPart];
+      if (svgPart && bodyPartCounts[svgPart] !== undefined) {
+        bodyPartCounts[svgPart]++;
+      }
     }
   });
 
