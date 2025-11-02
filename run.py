@@ -20,16 +20,16 @@ def init_db():
     db.execute("""
     CREATE TABLE IF NOT EXISTS acidentes (
         id INTEGER PRIMARY KEY,
-        Data DATE,
-        Countries VARCHAR(100),
-        Local VARCHAR(200),
-        Industry_Sector VARCHAR(100),
-        Accident_Level VARCHAR(50),
-        Potential_Accident_Level VARCHAR(50),
-        Genre VARCHAR(20),
-        Employee_or_Third_Party VARCHAR(50),
-        Critical_Risk VARCHAR(200),
-        Description TEXT
+        Data TIMESTAMP,
+        Pais VARCHAR(100),
+        Estado VARCHAR(200),
+        Setor_Industrial VARCHAR(100),
+        Nivel_Acidente VARCHAR(50),
+        Nivel_Acidente_Potencial VARCHAR(50),
+        Genero VARCHAR(20),
+        Tipo_Trabalhador VARCHAR(50),
+        Risco_Critico VARCHAR(200),
+        Descricao TEXT
     )
     """)
     result = db.execute("SELECT COUNT(*) FROM acidentes").fetchall()
@@ -62,15 +62,15 @@ def get_accidents():
         SELECT 
             id,
             Data as date,
-            Countries as country,
-            Local as local,
-            Industry_Sector as sector,
-            Accident_Level as accidentLevel,
-            Potential_Accident_Level as potentialLevel,
-            Genre as gender,
-            Employee_or_Third_Party as employeeType,
-            Critical_Risk as criticalRisk,
-            Description as description
+            Pais as country,
+            Estado as local,
+            Setor_Industrial as sector,
+            Nivel_Acidente as accidentLevel,
+            Nivel_Acidente_Potencial as potentialLevel,
+            Genero as gender,
+            Tipo_Trabalhador as employeeType,
+            Risco_Critico as criticalRisk,
+            Descricao as description
         FROM acidentes
         ORDER BY Data DESC
     """).fetchall()
@@ -129,24 +129,24 @@ def get_statistics():
     
     # Estatísticas por gênero
     gender_stats = db.execute("""
-        SELECT Genre, COUNT(*) as count
+        SELECT Genero, COUNT(*) as count
         FROM acidentes
-        GROUP BY Genre
+        GROUP BY Genero
     """).fetchall()
     
     # Estatísticas por país
     country_stats = db.execute("""
-        SELECT Countries, COUNT(*) as count
+        SELECT Pais, COUNT(*) as count
         FROM acidentes
-        GROUP BY Countries
+        GROUP BY Pais
         ORDER BY count DESC
     """).fetchall()
     
     # Estatísticas por setor
     sector_stats = db.execute("""
-        SELECT Industry_Sector, COUNT(*) as count
+        SELECT Setor_Industrial, COUNT(*) as count
         FROM acidentes
-        GROUP BY Industry_Sector
+        GROUP BY Setor_Industrial
     """).fetchall()
     
     # Estatísticas por mês
@@ -161,9 +161,9 @@ def get_statistics():
     
     # Estatísticas por local
     location_stats = db.execute("""
-        SELECT Local, Countries, COUNT(*) as count
+        SELECT Estado, Pais, COUNT(*) as count
         FROM acidentes
-        GROUP BY Local, Countries
+        GROUP BY Estado, Pais
         ORDER BY count DESC
         LIMIT 10
     """).fetchall()
