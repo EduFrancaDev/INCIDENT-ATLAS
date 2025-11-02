@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Incident Atlas - Dashboard</title>
+  <link rel="stylesheet" href="../static/css/dashboard.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+</head>
+<body>
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="sidebar-header">
+      <h1 class="sidebar-title">Incident Atlas</h1>
+    </div>
+    <nav class="sidebar-nav">
+      <a href="/home" class="nav-item">
+        <svg class="nav-icon" width="20" height="20" viewBox="0 0 20 20" fill="none">
+          <path d="M3 10L10 3L17 10V17C17 17.5304 16.7893 18.0391 16.4142 18.4142C16.0391 18.7893 15.5304 19 15 19H5C4.46957 19 3.96086 18.7893 3.58579 18.4142C3.21071 18.0391 3 17.5304 3 17V10Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        <span>Home</span>
+      </a>
+      <a href="/dashboard" class="nav-item active">
+        <svg class="nav-icon" width="20" height="20" viewBox="0 0 20 20" fill="none">
+          <rect x="3" y="3" width="6" height="6" rx="1" stroke="currentColor" stroke-width="2"/>
+          <rect x="11" y="3" width="6" height="6" rx="1" stroke="currentColor" stroke-width="2"/>
+          <rect x="3" y="11" width="6" height="6" rx="1" stroke="currentColor" stroke-width="2"/>
+          <rect x="11" y="11" width="6" height="6" rx="1" stroke="currentColor" stroke-width="2"/>
+        </svg>
+        <span>Dashboard</span>
+      </a>
+    </nav>
+  </aside>
+
+  <!-- Main Content -->
+  <main class="main-content">
+    <!-- Filter Cards Row -->
+    <div class="filters-row">
+      <!-- Card Mulheres -->
+      <div class="filter-card clickable" id="filterWomen" data-active="true">
+        <div class="filter-card-icon women">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+            <circle cx="12" cy="7" r="4" stroke="currentColor" stroke-width="2"/>
+            <path d="M5 21V19C5 16.7909 6.79086 15 9 15H15C17.2091 15 19 16.7909 19 19V21" stroke="currentColor" stroke-width="2"/>
+          </svg>
+        </div>
+        <div class="filter-card-content">
+          <div class="filter-card-label">Mulheres</div>
+          <div class="filter-card-value" id="womenCount">2</div>
+          <div class="filter-card-percent" id="womenPercent">30%</div>
+        </div>
+      </div>
+
+      <!-- Card Homens -->
+      <div class="filter-card clickable" id="filterMen" data-active="true">
+        <div class="filter-card-icon men">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+            <circle cx="12" cy="7" r="4" stroke="currentColor" stroke-width="2"/>
+            <path d="M5 21V19C5 16.7909 6.79086 15 9 15H15C17.2091 15 19 16.7909 19 19V21" stroke="currentColor" stroke-width="2"/>
+          </svg>
+        </div>
+        <div class="filter-card-content">
+          <div class="filter-card-label">Homens</div>
+          <div class="filter-card-value" id="menCount">2</div>
+          <div class="filter-card-percent" id="menPercent">30%</div>
+        </div>
+      </div>
+
+      <!-- Card Países -->
+      <div class="filter-card clickable" id="filterCountries">
+        <div class="filter-card-icon countries">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+            <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2"/>
+            <path d="M3 12H21M12 3C14.5 6 14.5 18 12 21M12 3C9.5 6 9.5 18 12 21" stroke="currentColor" stroke-width="2"/>
+          </svg>
+        </div>
+        <div class="filter-card-content">
+          <div class="filter-card-label">Países</div>
+          <div class="filter-card-value" id="countriesCount">3</div>
+          <div class="filter-card-sublabel" id="countriesNames">Brasil, Portugal, Angola</div>
+        </div>
+      </div>
+
+      <!-- Card Período -->
+      <div class="filter-card clickable" id="filterPeriod">
+        <div class="filter-card-icon period">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+            <rect x="3" y="4" width="18" height="18" rx="2" stroke="currentColor" stroke-width="2"/>
+            <path d="M16 2V6M8 2V6M3 10H21" stroke="currentColor" stroke-width="2"/>
+          </svg>
+        </div>
+        <div class="filter-card-content">
+          <div class="filter-card-label">Período Analisado</div>
+          <div class="filter-card-value" id="periodDays">12 days</div>
+          <div class="filter-card-sublabel" id="periodRange">Jan 2016 - Oct 2017</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Charts Grid -->
+    <div class="charts-grid">
+      <!-- Quantidade de Acidentes - Mês -->
+      <div class="chart-card large">
+        <div class="chart-header">
+          <h3 class="chart-title">Quantidade de acidentes - Mês</h3>
+          <button class="chart-menu-btn">⋮</button>
+        </div>
+        <div class="chart-controls">
+          <select id="monthRangeFilter" class="chart-filter">
+            <option value="all">Todo o período</option>
+            <option value="6">Últimos 6 meses</option>
+            <option value="3">Últimos 3 meses</option>
+            <option value="1">Último mês</option>
+          </select>
+        </div>
+        <canvas id="accidentsPerMonthChart"></canvas>
+      </div>
+
+      <!-- Potencial de Acidentes - Setores -->
+      <div class="chart-card medium">
+        <div class="chart-header">
+          <h3 class="chart-title">Potencial de Acidentes - Setores</h3>
+          <button class="chart-menu-btn">⋮</button>
+        </div>
+        <div class="chart-legend-wrapper">
+          <canvas id="accidentPotentialChart"></canvas>
+          <div class="chart-legend" id="potentialLegend"></div>
+        </div>
+      </div>
+
+      <!-- Membros Mais Afetados -->
+      <div class="chart-card medium">
+        <div class="chart-header">
+          <h3 class="chart-title">Membros mais Afetados</h3>
+          <button class="chart-menu-btn">⋮</button>
+        </div>
+        <div class="body-map-container">
+          <svg class="body-map" viewBox="0 0 200 400" id="bodyMapSvg">
+            <!-- Cabeça/Face/Olhos -->
+            <ellipse cx="100" cy="40" rx="25" ry="30" class="body-part" data-part="face" data-count="0"/>
+            
+            <!-- Pescoço -->
+            <rect x="90" y="65" width="20" height="15" class="body-part" data-part="neck" data-count="0"/>
+            
+            <!-- Tronco -->
+            <rect x="70" y="80" width="60" height="80" rx="10" class="body-part" data-part="trunk" data-count="0"/>
+            
+            <!-- Braço Esquerdo -->
+            <rect x="40" y="85" width="25" height="70" rx="12" class="body-part" data-part="left-arm" data-count="0"/>
+            
+            <!-- Braço Direito -->
+            <rect x="135" y="85" width="25" height="70" rx="12" class="body-part" data-part="right-arm" data-count="0"/>
+            
+            <!-- Mãos/Dedos Esquerda -->
+            <ellipse cx="50" cy="170" rx="15" ry="20" class="body-part" data-part="hands" data-count="0"/>
+            
+            <!-- Mãos/Dedos Direita -->
+            <ellipse cx="150" cy="170" rx="15" ry="20" class="body-part" data-part="hands" data-count="0"/>
+            
+            <!-- Perna Esquerda -->
+            <rect x="75" y="165" width="20" height="80" rx="10" class="body-part" data-part="left-leg" data-count="0"/>
+            
+            <!-- Perna Direita -->
+            <rect x="105" y="165" width="20" height="80" rx="10" class="body-part" data-part="right-leg" data-count="0"/>
+            
+            <!-- Pé Esquerdo -->
+            <ellipse cx="85" cy="260" rx="12" ry="18" class="body-part" data-part="feet" data-count="0"/>
+            
+            <!-- Pé Direito -->
+            <ellipse cx="115" cy="260" rx="12" ry="18" class="body-part" data-part="feet" data-count="0"/>
+          </svg>
+          <div class="body-map-legend">
+            <div class="legend-item">
+              <span class="legend-color" style="background: #8B0000;"></span>
+              <span>Alto (15+)</span>
+            </div>
+            <div class="legend-item">
+              <span class="legend-color" style="background: #FF4500;"></span>
+              <span>Médio (8-14)</span>
+            </div>
+            <div class="legend-item">
+              <span class="legend-color" style="background: #FFA500;"></span>
+              <span>Baixo (3-7)</span>
+            </div>
+            <div class="legend-item">
+              <span class="legend-color" style="background: #FFD700;"></span>
+              <span>Mínimo (1-2)</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Descrição dos Incidentes -->
+      <div class="chart-card medium">
+        <div class="chart-header">
+          <h3 class="chart-title">Descrição dos Incidentes</h3>
+          <button class="chart-menu-btn">⋮</button>
+        </div>
+        <div class="incidents-list" id="incidentsList">
+          <!-- Populated by JS -->
+        </div>
+      </div>
+
+      <!-- Quantidade de Acidentes - Local -->
+      <div class="chart-card large">
+        <div class="chart-header">
+          <h3 class="chart-title">Quantidade de Acidentes - Local</h3>
+          <button class="chart-menu-btn">⋮</button>
+        </div>
+        <div class="chart-controls">
+          <select id="countryFilter" class="chart-filter">
+            <option value="all">Todos os países</option>
+            <option value="Country_01">País 1</option>
+            <option value="Country_02">País 2</option>
+          </select>
+        </div>
+        <canvas id="accidentsByLocationChart"></canvas>
+      </div>
+    </div>
+  </main>
+
+  <!-- Modal para Descrição de Incidente -->
+  <div id="incidentModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 id="modalTitle">Detalhes do Incidente</h2>
+        <button class="modal-close" id="modalClose">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="modal-info">
+          <strong>ID:</strong> <span id="modalId"></span>
+        </div>
+        <div class="modal-info">
+          <strong>Data:</strong> <span id="modalDate"></span>
+        </div>
+        <div class="modal-info">
+          <strong>Local:</strong> <span id="modalLocation"></span>
+        </div>
+        <div class="modal-info">
+          <strong>País:</strong> <span id="modalCountry"></span>
+        </div>
+        <div class="modal-info">
+          <strong>Setor:</strong> <span id="modalSector"></span>
+        </div>
+        <div class="modal-info">
+          <strong>Nível de Acidente:</strong> <span id="modalLevel"></span>
+        </div>
+        <div class="modal-info">
+          <strong>Risco Crítico:</strong> <span id="modalRisk"></span>
+        </div>
+        <div class="modal-description">
+          <strong>Descrição:</strong>
+          <p id="modalDescription"></p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal para Filtro de Países -->
+  <div id="countriesModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>Selecionar Países</h2>
+        <button class="modal-close" id="countriesModalClose">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="countries-filter-list" id="countriesFilterList">
+          <!-- Populated by JS -->
+        </div>
+        <div class="modal-actions">
+          <button class="btn-secondary" id="countriesClearAll">Limpar Todos</button>
+          <button class="btn-primary" id="countriesSelectAll">Selecionar Todos</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal para Filtro de Período -->
+  <div id="periodModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>Selecionar Período</h2>
+        <button class="modal-close" id="periodModalClose">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="date-picker-container">
+          <div class="date-input-group">
+            <label for="startDate">Data Inicial:</label>
+            <input type="date" id="startDate" class="date-input">
+          </div>
+          <div class="date-input-group">
+            <label for="endDate">Data Final:</label>
+            <input type="date" id="endDate" class="date-input">
+          </div>
+        </div>
+        <div class="modal-actions">
+          <button class="btn-secondary" id="periodCancel">Cancelar</button>
+          <button class="btn-primary" id="periodApply">Aplicar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="../static/js/dashboard.js"></script>
+</body>
+</html>
