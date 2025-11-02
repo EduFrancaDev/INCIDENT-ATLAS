@@ -99,76 +99,81 @@
 
     <!-- Charts Grid -->
     <div class="charts-grid">
-      <!-- Quantidade de Acidentes - Mês -->
-      <div class="chart-card large">
-        <div class="chart-header">
-          <h3 class="chart-title">Quantidade de acidentes - Mês</h3>
-          <button class="chart-menu-btn">⋮</button>
+      <!-- Linha 1: Gráfico Mensal + Gráfico Setores -->
+      <div class="chart-row">
+        <!-- Quantidade de Acidentes - Mês -->
+        <div class="chart-card chart-monthly">
+          <div class="chart-header">
+            <h3 class="chart-title">Quantidade de acidentes - Mês</h3>
+            <button class="chart-menu-btn">⋮</button>
+          </div>
+          <div class="chart-controls">
+            <select id="monthRangeFilter" class="chart-filter">
+              <option value="all">Todo o período</option>
+              <option value="6">Últimos 6 meses</option>
+              <option value="3">Últimos 3 meses</option>
+              <option value="1">Último mês</option>
+            </select>
+          </div>
+          <canvas id="accidentsPerMonthChart"></canvas>
         </div>
-        <div class="chart-controls">
-          <select id="monthRangeFilter" class="chart-filter">
-            <option value="all">Todo o período</option>
-            <option value="6">Últimos 6 meses</option>
-            <option value="3">Últimos 3 meses</option>
-            <option value="1">Último mês</option>
-          </select>
+
+        <!-- Potencial de Acidentes - Setores -->
+        <div class="chart-card chart-sectors">
+          <div class="chart-header">
+            <h3 class="chart-title">Potencial de Acidentes - Setores</h3>
+            <button class="chart-menu-btn">⋮</button>
+          </div>
+          <div class="chart-legend-wrapper">
+            <canvas id="accidentPotentialChart"></canvas>
+            <div class="chart-legend" id="potentialLegend"></div>
+          </div>
         </div>
-        <canvas id="accidentsPerMonthChart"></canvas>
       </div>
 
-      <!-- Potencial de Acidentes - Setores -->
-      <div class="chart-card medium">
-        <div class="chart-header">
-          <h3 class="chart-title">Potencial de Acidentes - Setores</h3>
-          <button class="chart-menu-btn">⋮</button>
-        </div>
-        <div class="chart-legend-wrapper">
-          <canvas id="accidentPotentialChart"></canvas>
-          <div class="chart-legend" id="potentialLegend"></div>
-        </div>
-      </div>
-
-      <!-- Membros Mais Afetados -->
-      <div class="chart-card medium">
-        <div class="chart-header">
-          <h3 class="chart-title">Membros mais Afetados</h3>
-          <button class="chart-menu-btn">⋮</button>
-        </div>
-        <div class="body-map-container">
-          <svg class="body-map" viewBox="0 0 200 400" id="bodyMapSvg">
-            <!-- Cabeça/Face/Olhos -->
-            <ellipse cx="100" cy="40" rx="25" ry="30" class="body-part" data-part="face" data-count="0"/>
-            
-            <!-- Pescoço -->
-            <rect x="90" y="65" width="20" height="15" class="body-part" data-part="neck" data-count="0"/>
-            
-            <!-- Tronco -->
-            <rect x="70" y="80" width="60" height="80" rx="10" class="body-part" data-part="trunk" data-count="0"/>
-            
-            <!-- Braço Esquerdo -->
-            <rect x="40" y="85" width="25" height="70" rx="12" class="body-part" data-part="left-arm" data-count="0"/>
-            
-            <!-- Braço Direito -->
-            <rect x="135" y="85" width="25" height="70" rx="12" class="body-part" data-part="right-arm" data-count="0"/>
-            
-            <!-- Mãos/Dedos Esquerda -->
-            <ellipse cx="50" cy="170" rx="15" ry="20" class="body-part" data-part="hands" data-count="0"/>
-            
-            <!-- Mãos/Dedos Direita -->
-            <ellipse cx="150" cy="170" rx="15" ry="20" class="body-part" data-part="hands" data-count="0"/>
-            
-            <!-- Perna Esquerda -->
-            <rect x="75" y="165" width="20" height="80" rx="10" class="body-part" data-part="left-leg" data-count="0"/>
-            
-            <!-- Perna Direita -->
-            <rect x="105" y="165" width="20" height="80" rx="10" class="body-part" data-part="right-leg" data-count="0"/>
-            
-            <!-- Pé Esquerdo -->
-            <ellipse cx="85" cy="260" rx="12" ry="18" class="body-part" data-part="feet" data-count="0"/>
-            
-            <!-- Pé Direito -->
-            <ellipse cx="115" cy="260" rx="12" ry="18" class="body-part" data-part="feet" data-count="0"/>
-          </svg>
+      <!-- Linha 2: Mapa de Calor + Lista de Incidentes -->
+      <div class="chart-row">
+        <!-- Membros Mais Afetados -->
+        <div class="chart-card chart-bodymap">
+          <div class="chart-header">
+            <h3 class="chart-title">Membros mais Afetados</h3>
+            <button class="chart-menu-btn">⋮</button>
+          </div>
+          <div class="body-map-container">
+            <svg class="body-map" viewBox="0 0 200 400" id="bodyMapSvg">
+              <!-- Cabeça/Face/Olhos -->
+              <ellipse cx="100" cy="40" rx="25" ry="30" class="body-part" data-part="face" data-count="0"/>
+              
+              <!-- Pescoço -->
+              <rect x="90" y="65" width="20" height="15" class="body-part" data-part="neck" data-count="0"/>
+              
+              <!-- Tronco -->
+              <rect x="70" y="80" width="60" height="80" rx="10" class="body-part" data-part="trunk" data-count="0"/>
+              
+              <!-- Braço Esquerdo -->
+              <rect x="40" y="85" width="25" height="70" rx="12" class="body-part" data-part="left-arm" data-count="0"/>
+              
+              <!-- Braço Direito -->
+              <rect x="135" y="85" width="25" height="70" rx="12" class="body-part" data-part="right-arm" data-count="0"/>
+              
+              <!-- Mãos/Dedos Esquerda -->
+              <ellipse cx="50" cy="170" rx="15" ry="20" class="body-part" data-part="hands" data-count="0"/>
+              
+              <!-- Mãos/Dedos Direita -->
+              <ellipse cx="150" cy="170" rx="15" ry="20" class="body-part" data-part="hands" data-count="0"/>
+              
+              <!-- Perna Esquerda -->
+              <rect x="75" y="165" width="20" height="80" rx="10" class="body-part" data-part="left-leg" data-count="0"/>
+              
+              <!-- Perna Direita -->
+              <rect x="105" y="165" width="20" height="80" rx="10" class="body-part" data-part="right-leg" data-count="0"/>
+              
+              <!-- Pé Esquerdo -->
+              <ellipse cx="85" cy="260" rx="12" ry="18" class="body-part" data-part="feet" data-count="0"/>
+              
+              <!-- Pé Direito -->
+              <ellipse cx="115" cy="260" rx="12" ry="18" class="body-part" data-part="feet" data-count="0"/>
+            </svg>
           <div class="body-map-legend">
             <div class="legend-item">
               <span class="legend-color" style="background: #8B0000;"></span>
@@ -188,33 +193,42 @@
             </div>
           </div>
         </div>
+        <div class="body-map-tooltip" id="bodyMapTooltip"></div>
+      </div>        <!-- Descrição dos Incidentes -->
+        <div class="chart-card chart-incidents">
+          <div class="chart-header">
+            <h3 class="chart-title">Descrição dos Incidentes</h3>
+            <button class="chart-menu-btn">⋮</button>
+          </div>
+          <div class="incidents-search-container">
+            <input type="text" id="incidentsSearch" class="incidents-search-input" placeholder="Buscar por país, estado, descrição, data, nível...">
+          </div>
+          <div class="incidents-list" id="incidentsList">
+            <!-- Populated by JS -->
+          </div>
+          <div class="incidents-loading" id="incidentsLoading" style="display: none;">
+            Carregando mais incidentes...
+          </div>
+        </div>
       </div>
 
-      <!-- Descrição dos Incidentes -->
-      <div class="chart-card medium">
-        <div class="chart-header">
-          <h3 class="chart-title">Descrição dos Incidentes</h3>
-          <button class="chart-menu-btn">⋮</button>
+      <!-- Linha 3: Gráfico de Localização (toda a largura) -->
+      <div class="chart-row">
+        <!-- Quantidade de Acidentes - Local -->
+        <div class="chart-card chart-locations">
+          <div class="chart-header">
+            <h3 class="chart-title">Quantidade de Acidentes - Local</h3>
+            <button class="chart-menu-btn">⋮</button>
+          </div>
+          <div class="chart-controls">
+            <select id="countryFilter" class="chart-filter">
+              <option value="all">Todos os países</option>
+              <option value="Country_01">País 1</option>
+              <option value="Country_02">País 2</option>
+            </select>
+          </div>
+          <canvas id="accidentsByLocationChart"></canvas>
         </div>
-        <div class="incidents-list" id="incidentsList">
-          <!-- Populated by JS -->
-        </div>
-      </div>
-
-      <!-- Quantidade de Acidentes - Local -->
-      <div class="chart-card large">
-        <div class="chart-header">
-          <h3 class="chart-title">Quantidade de Acidentes - Local</h3>
-          <button class="chart-menu-btn">⋮</button>
-        </div>
-        <div class="chart-controls">
-          <select id="countryFilter" class="chart-filter">
-            <option value="all">Todos os países</option>
-            <option value="Country_01">País 1</option>
-            <option value="Country_02">País 2</option>
-          </select>
-        </div>
-        <canvas id="accidentsByLocationChart"></canvas>
       </div>
     </div>
   </main>
