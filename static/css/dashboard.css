@@ -199,6 +199,12 @@ body {
 
 /* Charts Grid */
 .charts-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.chart-row {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
   gap: 20px;
@@ -211,12 +217,36 @@ body {
   box-shadow: var(--shadow);
 }
 
-.chart-card.large {
+/* Linha 1: Mensal (60%) + Setores (40%) */
+.chart-monthly {
+  grid-column: span 1;
+}
+
+.chart-sectors {
+  grid-column: span 1;
+}
+
+/* Linha 2: Mapa (40%) + Incidentes (60%) */
+.chart-bodymap {
+  grid-column: span 1;
+}
+
+.chart-incidents {
+  grid-column: span 1;
+}
+
+/* Linha 3: Localização (100%) */
+.chart-locations {
   grid-column: span 2;
 }
 
-.chart-card.medium {
-  grid-column: span 1;
+/* Ajustes para diferentes proporções */
+.chart-row:nth-child(1) {
+  grid-template-columns: 1.5fr 1fr;
+}
+
+.chart-row:nth-child(2) {
+  grid-template-columns: 1fr 1.5fr;
 }
 
 .chart-header {
@@ -273,28 +303,37 @@ body {
 
 .chart-legend-wrapper {
   display: flex;
-  gap: 20px;
+  gap: 24px;
   align-items: center;
+  justify-content: center;
+  padding: 0 20px;
+}
+
+.chart-legend-wrapper canvas {
+  max-width: 200px;
+  max-height: 200px;
 }
 
 .chart-legend {
   flex-shrink: 0;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 12px;
+  min-width: 150px;
 }
 
 .legend-item {
   display: flex;
   align-items: center;
-  gap: 8px;
-  font-size: 12px;
+  gap: 10px;
+  font-size: 13px;
+  line-height: 1.4;
 }
 
 .legend-color {
-  width: 16px;
-  height: 16px;
-  border-radius: 3px;
+  width: 18px;
+  height: 18px;
+  border-radius: 4px;
   flex-shrink: 0;
 }
 
@@ -304,6 +343,7 @@ body {
   gap: 24px;
   align-items: center;
   justify-content: center;
+  position: relative;
 }
 
 .body-map {
@@ -351,13 +391,65 @@ body {
   gap: 8px;
 }
 
+.body-map-tooltip {
+  position: fixed;
+  background-color: rgba(0, 0, 0, 0.9);
+  color: white;
+  padding: 10px 14px;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+  z-index: 10000;
+  white-space: nowrap;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  transform: translate(-50%, -100%);
+  margin-top: -10px;
+}
+
+.body-map-tooltip.active {
+  opacity: 1;
+}
+
 /* Incidents List */
+.incidents-search-container {
+  margin-bottom: 12px;
+}
+
+.incidents-search-input {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  font-size: 14px;
+  outline: none;
+  transition: all 0.2s;
+}
+
+.incidents-search-input:hover {
+  border-color: var(--primary-color);
+}
+
+.incidents-search-input:focus {
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 3px rgba(250, 0, 63, 0.1);
+}
+
 .incidents-list {
   max-height: 400px;
   overflow-y: auto;
   display: flex;
   flex-direction: column;
   gap: 8px;
+}
+
+.incidents-loading {
+  text-align: center;
+  padding: 12px;
+  color: var(--text-secondary);
+  font-size: 14px;
 }
 
 .incident-item {
@@ -666,12 +758,15 @@ body {
 
 /* Responsive Design */
 @media (max-width: 1400px) {
-  .charts-grid {
-    grid-template-columns: 1fr;
+  .chart-row {
+    grid-template-columns: 1fr !important;
   }
   
-  .chart-card.large,
-  .chart-card.medium {
+  .chart-monthly,
+  .chart-sectors,
+  .chart-bodymap,
+  .chart-incidents,
+  .chart-locations {
     grid-column: span 1;
   }
 }
