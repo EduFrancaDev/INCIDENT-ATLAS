@@ -45,6 +45,7 @@ def close_db(error):
     if db is not None:
         db.close()
 
+@app.route('/')
 @app.route('/home')
 def home():
     return render_template('home.html')
@@ -334,7 +335,7 @@ def get_monthly_chart_data():
     
     monthly_data = db.execute(query, list(params.values())).fetchall()
     
-    # Formatar labels (Jan, Fev, Mar...)
+    # Formatar labels (Jan/2016, Fev/2016, Mar/2016...)
     month_names = {
         '01': 'Jan', '02': 'Fev', '03': 'Mar', '04': 'Abr',
         '05': 'Mai', '06': 'Jun', '07': 'Jul', '08': 'Ago',
@@ -345,8 +346,9 @@ def get_monthly_chart_data():
     data = []
     for row in monthly_data:
         month_str = row[0]  # '2016-01'
-        month_num = month_str.split('-')[1]
-        labels.append(month_names.get(month_num, month_num))
+        year, month_num = month_str.split('-')
+        month_label = month_names.get(month_num, month_num)
+        labels.append(f'{month_label}/{year}')
         data.append(row[1])
     
     return jsonify({
@@ -547,6 +549,58 @@ def get_bodyparts_heatmap_data():
         'bodyParts': [{'part': row[0], 'count': row[1]} for row in bodypart_data]
     })
 
+@app.route('/api/safety-record')
+def get_safety_record():
+    """Endpoint API para retornar dados do recorde de segurança"""
+    db = get_db()
+    
+    # Buscar apenas acidentes graves (IV, V ou VI no nível real ou potencial)
+    acidentes_graves = db.execute("""
+        SELECT DISTINCT Data
+        FROM acidentes
+        WHERE Nivel_Acidente IN ('IV - Alto', 'V - Muito Alto', 'VI - Crítico')
+           OR Nivel_Acidente_Potencial IN ('IV - Alto', 'V - Muito Alto', 'VI - Crítico')
+        ORDER BY Data
+    """).fetchall()
+    
+    if len(acidentes_graves) < 2:
+        return jsonify({
+            'recordDays': 0,
+            'recordStartDate': None,
+            'recordEndDate': None,
+            'currentDaysSinceLast': 0,
+            'lastSevereAccidentDate': None
+        })
+    
+    # Calcular o maior intervalo entre acidentes graves
+    maior_intervalo_dias = 0
+    data_inicio_maior = None
+    data_fim_maior = None
+    
+    for i in range(len(acidentes_graves) - 1):
+        data_atual = acidentes_graves[i][0]
+        data_proxima = acidentes_graves[i + 1][0]
+        diferenca = (data_proxima - data_atual).days
+        
+        if diferenca > maior_intervalo_dias:
+            maior_intervalo_dias = diferenca
+            data_inicio_maior = data_atual
+            data_fim_maior = data_proxima
+    
+    # Calcular dias desde o último acidente grave
+    ultima_data_grave = acidentes_graves[-1][0]
+    # Usar a data do último registro do banco como "hoje" para consistência
+    ultima_data_total = db.execute("SELECT MAX(Data) FROM acidentes").fetchone()[0]
+    dias_desde_ultimo = (ultima_data_total - ultima_data_grave).days
+    
+    return jsonify({
+        'recordDays': maior_intervalo_dias,
+        'recordStartDate': data_inicio_maior.isoformat() if data_inicio_maior else None,
+        'recordEndDate': data_fim_maior.isoformat() if data_fim_maior else None,
+        'currentDaysSinceLast': dias_desde_ultimo,
+        'lastSevereAccidentDate': ultima_data_grave.isoformat() if ultima_data_grave else None
+    })
+
 @app.route('/api/accidents/filtered')
 def get_filtered_accidents():
     """Endpoint API para retornar acidentes filtrados com paginação"""
@@ -646,6 +700,142 @@ def get_filtered_accidents():
         accidents.append(accident)
     
     return jsonify(accidents)
+
+@app.route('/api/next-actions')
+def get_next_actions():
+    """Endpoint API para retornar próximas ações baseadas nos dados históricos (2016-2017)"""
+    db = get_db()
+    from datetime import datetime, timedelta
+    
+    # Data base: julho de 2017 (último mês dos dados)
+    base_date = datetime(2017, 7, 15)
+    
+    # Buscar áreas mais críticas (mais acidentes graves recentes)
+    critical_areas = db.execute("""
+        SELECT 
+            Estado as location,
+            Pais as country,
+            COUNT(*) as accident_count,
+            SUM(CASE 
+                WHEN Nivel_Acidente IN ('IV - Alto', 'V - Muito Alto', 'VI - Crítico')
+                    OR Nivel_Acidente_Potencial IN ('IV - Alto', 'V - Muito Alto', 'VI - Crítico')
+                THEN 1 ELSE 0 
+            END) as severe_count,
+            MAX(Data) as last_accident
+        FROM acidentes
+        WHERE Data >= DATE '2017-01-01'
+        GROUP BY Estado, Pais
+        HAVING COUNT(*) >= 3
+        ORDER BY severe_count DESC, accident_count DESC
+        LIMIT 5
+    """).fetchall()
+    
+    # Buscar riscos críticos mais recorrentes
+    critical_risks = db.execute("""
+        SELECT 
+            Risco_Critico as risk,
+            COUNT(*) as count,
+            MAX(Data) as last_occurrence
+        FROM acidentes
+        WHERE Data >= DATE '2017-01-01'
+            AND Risco_Critico IS NOT NULL
+            AND Risco_Critico != ''
+        GROUP BY Risco_Critico
+        ORDER BY count DESC
+        LIMIT 3
+    """).fetchall()
+    
+    # Buscar partes do corpo mais afetadas
+    body_parts = db.execute("""
+        SELECT 
+            Parte_Corpo as body_part,
+            COUNT(*) as count
+        FROM acidentes
+        WHERE Data >= DATE '2017-01-01'
+            AND Parte_Corpo IS NOT NULL
+            AND Parte_Corpo != 'Não especificado'
+        GROUP BY Parte_Corpo
+        ORDER BY count DESC
+        LIMIT 3
+    """).fetchall()
+    
+    actions = []
+    
+    # Gerar ações baseadas nas áreas críticas
+    if critical_areas:
+        top_area = critical_areas[0]
+        location = top_area[0]
+        country = top_area[1]
+        severe_count = top_area[3]
+        
+        country_code = {
+            'Brasil': 'BR',
+            'EUA': 'US',
+            'Canadá': 'CA'
+        }.get(country, 'BR')
+        
+        if severe_count >= 5:
+            actions.append({
+                'priority': 'urgent',
+                'status': 'in-progress',
+                'title': f'Auditoria de segurança completa',
+                'location': f'{location} ({country_code})',
+                'responsible': 'Coordenador de Segurança',
+                'deadline': (base_date + timedelta(days=2)).strftime('%d/%m/%Y'),
+                'description': f'{severe_count} acidentes graves registrados nesta localidade'
+            })
+        elif severe_count >= 3:
+            actions.append({
+                'priority': 'high',
+                'status': 'planned',
+                'title': f'Reforço de protocolos de segurança',
+                'location': f'{location} ({country_code})',
+                'responsible': 'Supervisor de Operações',
+                'deadline': (base_date + timedelta(days=5)).strftime('%d/%m/%Y'),
+                'description': f'Área com {severe_count} acidentes graves recentes'
+            })
+    
+    # REMOVIDO: Ação de treinamento baseada em riscos críticos
+    
+    # Gerar ações baseadas nas partes do corpo mais afetadas
+    if body_parts and len(actions) < 3:
+        top_body_part = body_parts[0]
+        body_part_name = top_body_part[0]
+        body_part_count = top_body_part[1]
+        
+        epi_suggestions = {
+            'Mãos': 'luvas de proteção reforçadas',
+            'Pés': 'calçados de segurança antiderrapantes',
+            'Olhos': 'óculos de proteção e protetores faciais',
+            'Cabeça': 'capacetes e proteção craniana',
+            'Tronco': 'coletes de proteção'
+        }
+        
+        epi = epi_suggestions.get(body_part_name, 'EPIs adequados')
+        
+        actions.append({
+            'priority': 'medium',
+            'status': 'planned',
+            'title': f'Revisão de EPI: {body_part_name.lower()}',
+            'location': 'Setores de produção',
+            'responsible': 'Gestor de Equipamentos',
+            'deadline': (base_date + timedelta(days=10)).strftime('%d/%m/%Y'),
+            'description': f'{body_part_count} acidentes afetaram {body_part_name.lower()}. Sugestão: {epi}'
+        })
+    
+    # Garantir pelo menos 3 ações
+    while len(actions) < 3:
+        actions.append({
+            'priority': 'medium',
+            'status': 'planned',
+            'title': 'Manutenção preventiva de equipamentos',
+            'location': 'Todas as unidades',
+            'responsible': 'Equipe de Manutenção',
+            'deadline': (base_date + timedelta(days=14)).strftime('%d/%m/%Y'),
+            'description': 'Inspeção regular de equipamentos e instalações'
+        })
+    
+    return jsonify(actions[:3])
 
 if __name__ == '__main__':
     init_db()

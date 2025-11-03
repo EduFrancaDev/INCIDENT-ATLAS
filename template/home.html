@@ -1,11 +1,800 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="pt-BR">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Incident Atlas</title>
+  <link rel="stylesheet" href="../static/css/home.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 </head>
+
 <body>
-  
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="sidebar-header">
+      <h1 class="sidebar-title"><span class="title-red">Incident</span> <span class="title-white">Atlas</span></h1>
+    </div>
+    <nav class="sidebar-nav">
+      <a href="/home" class="nav-item active">
+        <svg class="nav-icon" width="20" height="20" viewBox="0 0 20 20" fill="none">
+          <path d="M3 10L10 3L17 10V17C17 17.5304 16.7893 18.0391 16.4142 18.4142C16.0391 18.7893 15.5304 19 15 19H5C4.46957 19 3.96086 18.7893 3.58579 18.4142C3.21071 18.0391 3 17.5304 3 17V10Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        <span>Home</span>
+      </a>
+      <a href="/dashboard" class="nav-item">
+        <svg class="nav-icon" width="20" height="20" viewBox="0 0 20 20" fill="none">
+          <rect x="3" y="3" width="6" height="6" rx="1" stroke="currentColor" stroke-width="2"/>
+          <rect x="11" y="3" width="6" height="6" rx="1" stroke="currentColor" stroke-width="2"/>
+          <rect x="3" y="11" width="6" height="6" rx="1" stroke="currentColor" stroke-width="2"/>
+          <rect x="11" y="11" width="6" height="6" rx="1" stroke="currentColor" stroke-width="2"/>
+        </svg>
+        <span>Dashboard</span>
+      </a>
+    </nav>
+  </aside>
+
+  <!-- Main Content -->
+  <main class="main-content">
+    <!-- Hero Section -->
+    <section class="hero-section">
+      <div class="hero-blur-bg">
+        <div class="blur-circle blur-left"></div>
+        <div class="blur-circle blur-right"></div>
+        <div class="blur-circle blur-center"></div>
+      </div>
+
+      <div class="hero-container">
+        <div class="hero-content">
+          <h1 class="hero-title-main">
+            <span class="title-highlight">Incident</span> Atlas
+          </h1>
+          <p class="hero-subtitle-main">Transformando dados em ações. Salvando vidas através da inteligência.</p>
+        </div>
+
+        <!-- Card de destaque -->
+        <div class="hero-message-card">
+          <div class="message-glow"></div>
+          <div class="message-icon">
+            <svg width="24" height="24" viewBox="0 0 20 20" fill="none">
+              <path d="M10 2L12.5 7.5L18 8.5L14 12.5L15 18L10 15.5L5 18L6 12.5L2 8.5L7.5 7.5L10 2Z" fill="currentColor" />
+            </svg>
+          </div>
+          <div class="message-content">
+            <div class="message-header">
+              <h3>💡 Insight do Momento</h3>
+              <span class="message-badge">Crítico</span>
+            </div>
+            <p>Mãos e dedos representam <strong>34,7%</strong> dos acidentes registrados. Proteção adequada e atenção salvam vidas.</p>
+            <div class="message-footer">
+              <span class="message-time">Atualizado agora</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Global Operations Section -->
+    <section class="global-operations-section">
+      <div class="container">
+        <div class="section-header">
+          <div class="section-icon">
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+              <circle cx="10" cy="10" r="9" stroke="currentColor" stroke-width="2" />
+              <path d="M3 10H17M10 3C12.5 6 12.5 18 10 21M10 3C7.5 6 7.5 18 10 21" stroke="currentColor" stroke-width="2" />
+            </svg>
+            <span>Uma Empresa, Três Países</span>
+          </div>
+          <h2>Atlas Manufacturing</h2>
+          <p>Operações no Brasil, Estados Unidos e Canadá. Cada filial compartilha o mesmo compromisso: reduzir incidentes de forma consistente.</p>
+        </div>
+
+        <div class="global-cards">
+          <!-- Brasil -->
+          <div class="global-card">
+            <div class="country-header">
+              <span class="country-flag">🇧🇷</span>
+              <div>
+                <h3>Brasil</h3>
+                <p>SP, MG, RJ, BA, GO</p>
+              </div>
+            </div>
+            <div class="country-stats">
+              <div class="stat-item">
+                <div class="stat-value" id="brIncidents">248</div>
+                <div class="stat-label">Incidentes</div>
+              </div>
+              <div class="stat-item">
+                <div class="stat-value">59%</div>
+                <div class="stat-label">do Total</div>
+              </div>
+              <div class="stat-item">
+                <div class="stat-badge">80,6%</div>
+                <div class="stat-label">Mineração</div>
+              </div>
+            </div>
+            <div class="country-insights">
+              <div class="insight-item">
+                <svg width="16" height="16" viewBox="0 0 20 20" fill="none">
+                  <path d="M10 2L12 8L18 9L14 13L15 19L10 16L5 19L6 13L2 9L8 8L10 2Z" fill="currentColor" />
+                </svg>
+                <div>
+                  <strong>Risco concentrado:</strong>
+                  <p>Operações de mineração e manuseio manual</p>
+                </div>
+              </div>
+              <div class="insight-item">
+                <svg width="16" height="16" viewBox="0 0 20 20" fill="none">
+                  <path d="M10 2L13 9L20 10L15 15L16 22L10 19L4 22L5 15L0 10L7 9L10 2Z" fill="currentColor" />
+                </svg>
+                <div>
+                  <strong>Ação que funciona:</strong>
+                  <p>Checklist de EPI e treinamento em segurança</p>
+                </div>
+              </div>
+              <div class="insight-highlight">
+                <strong>💡</strong> Mãos e dedos representam 33,9% dos acidentes. MG lidera com 89 casos.
+              </div>
+            </div>
+          </div>
+
+          <!-- Estados Unidos -->
+          <div class="global-card">
+            <div class="country-header">
+              <span class="country-flag">🇺🇸</span>
+              <div>
+                <h3>Estados Unidos</h3>
+                <p>CA, TX, AZ, NV, FL, CO</p>
+              </div>
+            </div>
+            <div class="country-stats">
+              <div class="stat-item">
+                <div class="stat-value" id="usIncidents">129</div>
+                <div class="stat-label">Incidentes</div>
+              </div>
+              <div class="stat-item">
+                <div class="stat-value">31%</div>
+                <div class="stat-label">do Total</div>
+              </div>
+              <div class="stat-item">
+                <div class="stat-badge">68,2%</div>
+                <div class="stat-label">Metalurgia</div>
+              </div>
+            </div>
+            <div class="country-insights">
+              <div class="insight-item">
+                <svg width="16" height="16" viewBox="0 0 20 20" fill="none">
+                  <path d="M10 2L12 8L18 9L14 13L15 19L10 16L5 19L6 13L2 9L8 8L10 2Z" fill="currentColor" />
+                </svg>
+                <div>
+                  <strong>Risco concentrado:</strong>
+                  <p>Processos metalúrgicos e manuseio de materiais</p>
+                </div>
+              </div>
+              <div class="insight-item">
+                <svg width="16" height="16" viewBox="0 0 20 20" fill="none">
+                  <path d="M10 2L13 9L20 10L15 15L16 22L10 19L4 22L5 15L0 10L7 9L10 2Z" fill="currentColor" />
+                </svg>
+                <div>
+                  <strong>Ação que funciona:</strong>
+                  <p>Protocolos de segurança térmica e EPI reforçado</p>
+                </div>
+              </div>
+              <div class="insight-highlight">
+                <strong>💡</strong> Mãos e face são as áreas mais atingidas (37,2% e 14% respectivamente).
+              </div>
+            </div>
+          </div>
+
+          <!-- Canadá -->
+          <div class="global-card">
+            <div class="country-header">
+              <span class="country-flag">🇨🇦</span>
+              <div>
+                <h3>Canadá</h3>
+                <p>Quebec</p>
+              </div>
+            </div>
+            <div class="country-stats">
+              <div class="stat-item">
+                <div class="stat-value" id="caIncidents">41</div>
+                <div class="stat-label">Incidentes</div>
+              </div>
+              <div class="stat-item">
+                <div class="stat-value">10%</div>
+                <div class="stat-label">do Total</div>
+              </div>
+              <div class="stat-item">
+                <div class="stat-badge positive">Menor</div>
+                <div class="stat-label">Taxa</div>
+              </div>
+            </div>
+            <div class="country-insights">
+              <div class="insight-item">
+                <svg width="16" height="16" viewBox="0 0 20 20" fill="none">
+                  <path d="M10 2L12 8L18 9L14 13L15 19L10 16L5 19L6 13L2 9L8 8L10 2Z" fill="currentColor" />
+                </svg>
+                <div>
+                  <strong>Risco concentrado:</strong>
+                  <p>Face (29,3%) e mãos (31,7% total)</p>
+                </div>
+              </div>
+              <div class="insight-item">
+                <svg width="16" height="16" viewBox="0 0 20 20" fill="none">
+                  <path d="M10 2L13 9L20 10L15 15L16 22L10 19L4 22L5 15L0 10L7 9L10 2Z" fill="currentColor" />
+                </svg>
+                <div>
+                  <strong>Ação que funciona:</strong>
+                  <p>Proteção facial reforçada e treinamento preventivo</p>
+                </div>
+              </div>
+              <div class="insight-highlight">
+                <strong>💡</strong> Menor taxa de acidentes. Modelo de boas práticas para outras filiais.
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="global-tip">
+          <strong>📊 Dica:</strong> Brasil concentra 59% dos acidentes (248), principalmente em mineração. EUA (31%) tem foco em metalurgia. Canadá (10%) apresenta a menor taxa - modelo de referência.
+        </div>
+      </div>
+    </section>
+
+    <!-- Safety Counter Section -->
+    <section class="safety-counter-section">
+      <div class="container">
+        <div class="safety-cards">
+          <!-- Card 1: Dias sem acidentes -->
+          <div class="safety-card">
+            <div class="safety-card-content">
+              <div class="safety-icon">
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                  <path d="M10 2L12.5 7.5L18 8.5L14 12.5L15 18L10 15.5L5 18L6 12.5L2 8.5L7.5 7.5L10 2Z"
+                    fill="currentColor" />
+                </svg>
+                <span>Contador de Segurança</span>
+              </div>
+
+              <div class="safety-counter">
+                <div class="counter-number" id="daysSinceAccident">15</div>
+                <div class="counter-label">Dias sem Acidentes Graves</div>
+              </div>
+
+              <p class="safety-message">Continue assim! Cada dia é uma vitória coletiva.</p>
+            </div>
+          </div>
+
+          <!-- Card 2: Recorde histórico -->
+          <div class="safety-card">
+            <div class="safety-card-content">
+              <div class="safety-icon">
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                  <path d="M10 2L13 9L20 10L15 15L16 22L10 19L4 22L5 15L0 10L7 9L10 2Z" fill="currentColor" />
+                </svg>
+                <span>Recorde Histórico</span>
+              </div>
+
+              <div class="safety-counter">
+                <div class="counter-number-small" id="recordDays">13</div>
+                <div class="counter-label">Dias Consecutivos (Recorde)</div>
+              </div>
+
+              <div class="progress-info">
+                <div class="progress-header">
+                  <span>Progresso atual</span>
+                  <span id="progressPercent">100%</span>
+                </div>
+                <div class="progress-bar">
+                  <div class="progress-fill" id="progressFill" style="width: 100%"></div>
+                </div>
+              </div>
+
+              <p class="safety-message">Faltam <span id="daysToRecord">0</span> dias para bater o recorde!</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Context Cards Section -->
+    <section class="context-section">
+      <div class="container">
+        <div class="section-header">
+          <h2>O Contexto por Trás dos Números</h2>
+          <p>Histórias reais de pessoas reais em diferentes lugares do mundo</p>
+        </div>
+
+        <div class="context-cards">
+          <div class="context-card">
+            <div class="context-tooltip">
+              <div class="tooltip-header">
+                <span class="tooltip-icon">👩‍🏭</span>
+                <span class="tooltip-title">Mulheres na Indústria</span>
+              </div>
+              <div class="tooltip-content">
+                Apenas <span class="tooltip-highlight" id="womenPercentTooltip">5.3%</span> dos acidentes envolvem mulheres. 
+                Isso reflete tanto a menor presença feminina em áreas de alto risco quanto, possivelmente, 
+                uma abordagem mais cautelosa nas operações.
+              </div>
+              <div class="tooltip-footer">
+                Diversidade também é segurança
+              </div>
+            </div>
+            <div class="context-icon women">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                <circle cx="12" cy="7" r="4" stroke="currentColor" stroke-width="2" />
+                <path d="M5 21V19C5 16.7909 6.79086 15 9 15H15C17.2091 15 19 16.7909 19 19V21" stroke="currentColor"
+                  stroke-width="2" />
+              </svg>
+            </div>
+            <div class="context-value" id="womenCount">22</div>
+            <div class="context-label">Mulheres</div>
+            <div class="context-percent" id="womenPercent">5.3%</div>
+          </div>
+
+          <div class="context-card">
+            <div class="context-tooltip">
+              <div class="tooltip-header">
+                <span class="tooltip-icon">👨‍🔧</span>
+                <span class="tooltip-title">Homens na Linha de Frente</span>
+              </div>
+              <div class="tooltip-content">
+                <span class="tooltip-highlight" id="menPercentTooltip">94.7%</span> dos acidentes envolvem homens, 
+                refletindo sua predominância em setores de mineração, metalurgia e operações de alto risco. 
+                Isso reforça a necessidade de treinamentos intensivos e EPIs adequados.
+              </div>
+              <div class="tooltip-footer">
+                A maioria carrega o maior risco
+              </div>
+            </div>
+            <div class="context-icon men">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                <circle cx="12" cy="7" r="4" stroke="currentColor" stroke-width="2" />
+                <path d="M5 21V19C5 16.7909 6.79086 15 9 15H15C17.2091 15 19 16.7909 19 19V21" stroke="currentColor"
+                  stroke-width="2" />
+              </svg>
+            </div>
+            <div class="context-value" id="menCount">396</div>
+            <div class="context-label">Homens</div>
+            <div class="context-percent" id="menPercent">94.7%</div>
+          </div>
+
+          <div class="context-card">
+            <div class="context-tooltip">
+              <div class="tooltip-header">
+                <span class="tooltip-icon">🌎</span>
+                <span class="tooltip-title">Operação Global</span>
+              </div>
+              <div class="tooltip-content">
+                A Atlas Manufacturing opera em <span class="tooltip-highlight">3 países</span> - Brasil, EUA e Canadá. 
+                Cada região enfrenta desafios únicos: mineração no Brasil, metalurgia nos EUA, e clima extremo no Canadá. 
+                O aprendizado cruzado entre filiais salva vidas!
+              </div>
+              <div class="tooltip-footer">
+                Fronteiras não limitam a segurança
+              </div>
+            </div>
+            <div class="context-icon countries">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2" />
+                <path d="M3 12H21M12 3C14.5 6 14.5 18 12 21M12 3C9.5 6 9.5 18 12 21" stroke="currentColor"
+                  stroke-width="2" />
+              </svg>
+            </div>
+            <div class="context-value" id="countriesCount">3</div>
+            <div class="context-label">Países</div>
+            <div class="context-percent" id="countriesNames">Brasil, EUA, Canadá</div>
+          </div>
+
+          <div class="context-card">
+            <div class="context-tooltip">
+              <div class="tooltip-header">
+                <span class="tooltip-icon">📅</span>
+                <span class="tooltip-title">Jornada de 18 Meses</span>
+              </div>
+              <div class="tooltip-content">
+                Este período de <span class="tooltip-highlight" id="periodDaysTooltip">555 dias</span> representa uma 
+                janela crucial de aprendizado. Cada acidente documentado é uma lição que previne futuras tragédias. 
+                Os dados de Jan/2016 a Jul/2017 moldaram novos protocolos de segurança.
+              </div>
+              <div class="tooltip-footer">
+                Tempo é conhecimento, conhecimento é vida
+              </div>
+            </div>
+            <div class="context-icon period">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                <rect x="3" y="4" width="18" height="18" rx="2" stroke="currentColor" stroke-width="2" />
+                <path d="M16 2V6M8 2V6M3 10H21" stroke="currentColor" stroke-width="2" />
+              </svg>
+            </div>
+            <div class="context-value" id="periodDays">555 dias</div>
+            <div class="context-label">Período Analisado</div>
+            <div class="context-percent" id="periodRange">Jan 2016 - Jul 2017</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Trend Analysis Section -->
+    <section class="trend-section">
+      <div class="container">
+        <div class="section-header-with-icon">
+          <div class="header-icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+              <path d="M3 3v18h18" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+              <path d="M18 9l-5 5-3-3-4 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+            </svg>
+          </div>
+          <div>
+            <h2>Padrões que Salvam Vidas</h2>
+            <p>O Que os Dados Revelam Sobre Sua Segurança</p>
+          </div>
+        </div>
+
+        <div class="chart-card-large">
+          <div class="chart-header-large">
+            <div>
+              <h3>Quantidade de Acidentes por Mês</h3>
+              <p>Tendências mensais revelam quando a atenção precisa ser redobrada</p>
+            </div>
+            <div class="chart-insight">
+              <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                <path d="M10 2L12 8L18 9L14 13L15 19L10 16L5 19L6 13L2 9L8 8L10 2Z" fill="currentColor" />
+              </svg>
+              <div>
+                <div class="insight-label">Mês crítico</div>
+                <div class="insight-value">Março: 42 acidentes</div>
+              </div>
+            </div>
+          </div>
+          <canvas id="monthlyTrendChart"></canvas>
+          <div class="chart-insight-box">
+            <strong>💡 Insight:</strong> Março de 2016 foi o mês mais perigoso, com <strong>34 acidentes</strong> - 55% acima da
+            média mensal de 22 acidentes. Isso indica que períodos sazonais ou picos de produção podem aumentar riscos.
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Body Heatmap Section -->
+    <section class="heatmap-section">
+      <div class="container">
+        <div class="section-header">
+          <h2>Proteja Suas Mãos: Sua Ferramenta Mais Valiosa</h2>
+          <p>Estas são as partes do corpo que mais precisam de atenção. <strong>34,7% dos acidentes envolvem mãos e dedos.</strong></p>
+        </div>
+
+        <!-- Filtro de Gênero -->
+        <div class="gender-filter">
+          <div class="filter-label">Filtrar por:</div>
+          <div class="filter-buttons">
+            <button class="filter-btn active" data-gender="all">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" stroke="currentColor" stroke-width="2"/>
+                <circle cx="9" cy="7" r="4" stroke="currentColor" stroke-width="2"/>
+                <path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" stroke="currentColor" stroke-width="2"/>
+              </svg>
+              Todos
+            </button>
+            <button class="filter-btn" data-gender="male">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                <circle cx="10" cy="8" r="5" stroke="currentColor" stroke-width="2"/>
+                <path d="M2 21c0-3.866 3.134-7 7-7h2c3.866 0 7 3.134 7 7" stroke="currentColor" stroke-width="2"/>
+              </svg>
+              Homens
+            </button>
+            <button class="filter-btn" data-gender="female">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                <circle cx="12" cy="8" r="5" stroke="currentColor" stroke-width="2"/>
+                <path d="M4 21c0-3.866 3.134-7 7-7h2c3.866 0 7 3.134 7 7" stroke="currentColor" stroke-width="2"/>
+              </svg>
+              Mulheres
+            </button>
+          </div>
+        </div>
+
+        <div class="heatmap-grid">
+          <!-- Body Map Card -->
+          <div class="body-map-card">
+            <div class="body-map-wrapper">
+              <svg id="bodyHeatmap" viewBox="0 0 200 400" class="body-svg-enhanced">
+                <!-- Cabeça -->
+                <circle id="head" class="body-part" cx="100" cy="40" r="25" data-name="Cabeça" data-count="0" />
+                
+                <!-- Olhos -->
+                <g id="eyes" class="body-part" data-name="Olhos" data-count="0">
+                  <circle cx="92" cy="35" r="4" />
+                  <circle cx="108" cy="35" r="4" />
+                </g>
+                
+                <!-- Tronco -->
+                <rect id="trunk" class="body-part" x="75" y="70" width="50" height="80" rx="10" data-name="Tronco" data-count="0" />
+                
+                <!-- Braço Esquerdo -->
+                <rect id="arms-left" class="body-part" x="45" y="75" width="25" height="70" rx="8" data-name="Braço Esquerdo" data-count="0" />
+                
+                <!-- Braço Direito -->
+                <rect id="arms-right" class="body-part" x="130" y="75" width="25" height="70" rx="8" data-name="Braço Direito" data-count="0" />
+                
+                <!-- Mãos -->
+                <g id="hands" class="body-part" data-name="Mãos e Dedos" data-count="0">
+                  <ellipse cx="57" cy="155" rx="12" ry="15" />
+                  <rect x="52" y="170" width="3" height="8" rx="1.5" />
+                  <rect x="56" y="170" width="3" height="10" rx="1.5" />
+                  <rect x="60" y="170" width="3" height="9" rx="1.5" />
+                  <rect x="64" y="170" width="3" height="7" rx="1.5" />
+                  <ellipse cx="143" cy="155" rx="12" ry="15" />
+                  <rect x="135" y="170" width="3" height="8" rx="1.5" />
+                  <rect x="139" y="170" width="3" height="10" rx="1.5" />
+                  <rect x="143" y="170" width="3" height="9" rx="1.5" />
+                  <rect x="147" y="170" width="3" height="7" rx="1.5" />
+                </g>
+                
+                <!-- Pernas -->
+                <g id="legs" class="body-part" data-name="Pernas" data-count="0">
+                  <rect x="80" y="155" width="18" height="90" rx="8" />
+                  <rect x="102" y="155" width="18" height="90" rx="8" />
+                </g>
+                
+                <!-- Pés -->
+                <g id="feet" class="body-part" data-name="Pés" data-count="0">
+                  <ellipse cx="89" cy="255" rx="12" ry="18" />
+                  <ellipse cx="111" cy="255" rx="12" ry="18" />
+                </g>
+              </svg>
+              
+              <!-- Tooltip -->
+              <div id="body-tooltip" class="body-tooltip"></div>
+            </div>
+            
+                        <div class="body-map-footer">
+              <strong>Mapa de Calor:</strong> Membros Mais Afetados
+            </div>
+          </div>
+
+          <!-- Stats Cards -->
+          <div class="injury-stats-cards">
+            <!-- Legenda de Cores -->
+            <div class="heatmap-legend">
+              <div class="legend-title">Intensidade:</div>
+              <div class="legend-items">
+                <div class="legend-item">
+                  <div class="legend-color" style="background: #FDE047;"></div>
+                  <span>Mínimo (1-25%)</span>
+                </div>
+                <div class="legend-item">
+                  <div class="legend-color" style="background: #FB923C;"></div>
+                  <span>Baixo (26-50%)</span>
+                </div>
+                <div class="legend-item">
+                  <div class="legend-color" style="background: #F87171;"></div>
+                  <span>Médio (51-75%)</span>
+                </div>
+                <div class="legend-item">
+                  <div class="legend-color" style="background: #DC2626;"></div>
+                  <span>Alto (76-100%)</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Action Box -->
+            <div class="injury-action-box">
+              <div class="action-box-header">
+                <strong>⚠️ Por que as mãos?</strong>
+              </div>
+              <p>Mãos concentram mais da metade das ocorrências globais.</p>
+              <p><strong>Ação rápida:</strong> Luvas de Poliamida com borracha Nitrílica + checklist de EPI na abertura de turno reduziu 80% dos casos.</p>
+            </div>
+
+            <!-- Global Learnings -->
+            <div class="global-learnings">
+              <h4>🌍 Lições Globais que Salvam Vidas:</h4>
+              
+              <div class="learning-item brasil">
+                <span class="flag">🇧🇷</span>
+                <div class="learning-content">
+                  <strong>Brasil - Mineração de Alto Impacto</strong>
+                  <p>
+                    <span class="learning-stat">📊 80,6%</span> dos acidentes em mineração concentram-se no manuseio manual 
+                    de materiais pesados (20-50kg). Principais lesões: esmagamento de dedos e cortes profundos em mãos.
+                  </p>
+                  <p>
+                    <span class="learning-highlight">💡 Solução implementada:</span> Luvas nitrílicas reforçadas 
+                    categoria EN388 nível 4 (resistência a corte e perfuração) + checklist digital obrigatório 
+                    via tablet no início de cada turno + supervisão com validação por foto.
+                  </p>
+                  <div class="learning-result success">
+                    <svg width="18" height="18" viewBox="0 0 20 20" fill="none">
+                      <path d="M7 10L9 12L13 8M19 10C19 14.9706 14.9706 19 10 19C5.02944 19 1 14.9706 1 10C1 5.02944 5.02944 1 10 1C14.9706 1 19 5.02944 19 10Z" stroke="currentColor" stroke-width="2"/>
+                    </svg>
+                    <span><strong>Resultado:</strong> Redução de <span class="result-number">47%</span> em 3 meses nas unidades de MG. Zero acidentes graves registrados no último trimestre de 2016.</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="learning-item usa">
+                <span class="flag">🇺🇸</span>
+                <div class="learning-content">
+                  <strong>Estados Unidos - Metalurgia e Precisão</strong>
+                  <p>
+                    <span class="learning-stat">⚠️ 32%</span> das lesões são causadas por fadiga em operações de alta 
+                    temperatura (>800°C). Turnos de 8h sem pausas estruturadas elevam risco de erro humano em 3,2x.
+                  </p>
+                  <p>
+                    <span class="learning-highlight">🚀 Inovação californiana:</span> Protocolo científico de micro-pausas 
+                    (5min a cada 45min) + rotação de tarefas entre 3 equipes a cada 2h + sistema de alerta sonoro 
+                    automático que monitora tempo de exposição ao calor + estações de hidratação com eletrólitos.
+                  </p>
+                  <div class="learning-result success">
+                    <svg width="18" height="18" viewBox="0 0 20 20" fill="none">
+                      <path d="M7 10L9 12L13 8M19 10C19 14.9706 14.9706 19 10 19C5.02944 19 1 14.9706 1 10C1 5.02944 5.02944 1 10 1C14.9706 1 19 5.02944 19 10Z" stroke="currentColor" stroke-width="2"/>
+                    </svg>
+                    <span><strong>Resultado:</strong> Redução de <span class="result-number">68%</span> em acidentes por fadiga. Produtividade aumentou 12% com trabalhadores mais alertas e focados.</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="learning-item canada">
+                <span class="flag">🇨🇦</span>
+                <div class="learning-content">
+                  <strong>Canadá - Excelência em Ambiente Extremo</strong>
+                  <p>
+                    <span class="learning-stat">🏆 10%</span> do total de acidentes - menor taxa global! Operação em 
+                    temperaturas de <strong>-30°C a -40°C</strong> por 6 meses/ano. Desafio: gelo, baixa visibilidade 
+                    e rigidez de materiais no frio extremo.
+                  </p>
+                  <p>
+                    <span class="learning-highlight">🎯 Segredo do sucesso:</span> Infraestrutura preventiva - tapetes 
+                    antiderrapantes aquecidos eletricamente + calçados especiais com tecnologia de tração em gelo 
+                    (certificação CSA Z195) + aquecedores portáteis em áreas de trabalho + treinamento anual obrigatório 
+                    de 40h sobre segurança em clima frio + sistema de buddy (duplas de segurança).
+                  </p>
+                  <div class="learning-result excellence">
+                    <svg width="18" height="18" viewBox="0 0 20 20" fill="none">
+                      <path d="M10 2L12.5 7.5L18 8.5L14 12.5L15 18L10 15.5L5 18L6 12.5L2 8.5L7.5 7.5L10 2Z" fill="currentColor"/>
+                    </svg>
+                    <span><strong>Resultado:</strong> <span class="result-number">Benchmark mundial!</span> Modelo de referência adotado em todas as operações de inverno. Taxa de acidentes 4x menor que média do setor.</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Location Analysis Section -->
+    <section class="location-section">
+      <div class="container">
+        <div class="section-header-with-icon">
+          <div class="header-icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+              <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z" stroke="currentColor"
+                stroke-width="2" />
+              <circle cx="12" cy="9" r="2.5" stroke="currentColor" stroke-width="2" />
+            </svg>
+          </div>
+          <div>
+            <h2>Zonas de Risco</h2>
+            <p>Onde a atenção precisa ser redobrada</p>
+          </div>
+        </div>
+
+        <div class="chart-card-large">
+          <div class="chart-header-large">
+            <div>
+              <h3>Quantidade de Acidentes por Estado</h3>
+              <p>Mapeamento das áreas mais perigosas da operação</p>
+            </div>
+            <div class="chart-insight">
+              <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                <path d="M10 2L12 8L18 9L14 13L15 19L10 16L5 19L6 13L2 9L8 8L10 2Z" fill="currentColor" />
+              </svg>
+              <div>
+                <div class="insight-label">Estado crítico</div>
+                <div class="insight-value">Minas Gerais</div>
+              </div>
+            </div>
+          </div>
+          <canvas id="locationChart"></canvas>
+
+          <div class="zone-indicators">
+            <div class="zone-item critical">
+              <div class="zone-icon">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                  <path d="M12 9V13M12 17H12.01M21 12C21 16.9706 16.9706 21 12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3C16.9706 3 21 7.02944 21 12Z" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                </svg>
+              </div>
+              <div class="zone-content">
+                <div class="zone-badge critical-badge">🔴 Crítica</div>
+                <strong>Ação Imediata Necessária</strong>
+                <p>Minas Gerais concentra 89 acidentes graves. Requer intervenção urgente e auditoria completa.</p>
+              </div>
+            </div>
+            <div class="zone-item warning">
+              <div class="zone-icon">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                  <path d="M12 9V13M12 17H12.01M10.29 3.86L1.82 18C1.64537 18.3024 1.55298 18.6453 1.55199 18.9945C1.551 19.3437 1.64143 19.6871 1.81442 19.9905C1.98741 20.2939 2.23675 20.5467 2.53773 20.7239C2.83871 20.9011 3.18082 20.9962 3.53 21H20.47C20.8192 20.9962 21.1613 20.9011 21.4623 20.7239C21.7633 20.5467 22.0126 20.2939 22.1856 19.9905C22.3586 19.6871 22.449 19.3437 22.448 18.9945C22.447 18.6453 22.3546 18.3024 22.18 18L13.71 3.86C13.5317 3.56611 13.2807 3.32312 12.9812 3.15448C12.6817 2.98585 12.3437 2.89725 12 2.89725C11.6563 2.89725 11.3183 2.98585 11.0188 3.15448C10.7193 3.32312 10.4683 3.56611 10.29 3.86Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              </div>
+              <div class="zone-content">
+                <div class="zone-badge warning-badge">🟡 Alerta</div>
+                <strong>Monitoramento Reforçado</strong>
+                <p>California, São Paulo e Rio de Janeiro apresentam tendência de aumento. Implementar medidas preventivas.</p>
+              </div>
+            </div>
+            <div class="zone-item normal">
+              <div class="zone-icon">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                  <path d="M9 12L11 14L15 10M21 12C21 16.9706 16.9706 21 12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3C16.9706 3 21 7.02944 21 12Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              </div>
+              <div class="zone-content">
+                <div class="zone-badge normal-badge">🟢 Estável</div>
+                <strong>Manter Protocolos</strong>
+                <p>Demais regiões apresentam índices controlados. Continuar com procedimentos de segurança padrão.</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="chart-insight-box">
+            <strong>💡 Recomendação:</strong> Minas Gerais registrou <strong>89 acidentes</strong> - 2,6x mais que a
+            média de 35 acidentes por estado. Sugerimos auditoria imediata e revisão dos protocolos de segurança.
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Next Actions Section -->
+    <section class="next-actions-section">
+      <div class="container">
+        <div class="section-header">
+          <div class="section-icon">
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+              <rect x="3" y="4" width="14" height="14" rx="2" stroke="currentColor" stroke-width="2" />
+              <path d="M16 2V6M8 2V6M3 10H17" stroke="currentColor" stroke-width="2" />
+            </svg>
+            <span>Plano de Ação</span>
+          </div>
+          <h2>Próximas Ações</h2>
+          <p>Ações prioritárias para as próximas 2 semanas</p>
+        </div>
+
+        <div class="actions-list" id="actions-list">
+          <!-- Ações serão carregadas dinamicamente -->
+          <div class="loading-actions">
+            <div class="spinner"></div>
+            <p>Analisando dados e gerando ações prioritárias...</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- CTA Button to Dashboard -->
+    <section class="cta-section">
+      <div class="container">
+        <h2>Quer Ver os Dados Completos?</h2>
+        <p>Filtre por período, local, parte do corpo e muito mais no dashboard interativo</p>
+        <a href="/dashboard" class="cta-button">
+          <svg width="16" height="16" viewBox="0 0 20 20" fill="none">
+            <rect x="3" y="3" width="6" height="6" rx="1" stroke="currentColor" stroke-width="2"/>
+            <rect x="11" y="3" width="6" height="6" rx="1" stroke="currentColor" stroke-width="2"/>
+            <rect x="3" y="11" width="6" height="6" rx="1" stroke="currentColor" stroke-width="2"/>
+            <rect x="11" y="11" width="6" height="6" rx="1" stroke="currentColor" stroke-width="2"/>
+          </svg>
+          Abrir Dashboard Completo
+          <svg width="16" height="16" viewBox="0 0 20 20" fill="none">
+            <path d="M7 4l6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+          </svg>
+        </a>
+        <p class="cta-note">Acesso completo para gestores de segurança • Atualizado em tempo real</p>
+      </div>
+    </section>
+
+  </main>
+
+  <script src="../static/js/home.js"></script>
 </body>
+
 </html>

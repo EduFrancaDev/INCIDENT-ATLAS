@@ -61,9 +61,17 @@ async function initializeData() {
     if (stats.months && stats.months.length > 0) {
       const months = stats.months.map(m => m.month);
       state.filters.dateRange.start = new Date(months[0] + '-01');
-      state.filters.dateRange.end = new Date(months[months.length - 1] + '-01');
-      state.filters.dateRange.end.setMonth(state.filters.dateRange.end.getMonth() + 1);
-      state.filters.dateRange.end.setDate(0); // Último dia do mês
+      
+      // Pegar a data máxima real do banco ao invés de calcular o último dia do mês
+      const lastMonth = months[months.length - 1];
+      state.filters.dateRange.end = new Date(lastMonth + '-31'); // Usar dia 31 para garantir incluir todo o mês
+      
+      console.log('📅 Range de datas configurado:', {
+        start: state.filters.dateRange.start,
+        end: state.filters.dateRange.end,
+        startISO: state.filters.dateRange.start.toISOString().split('T')[0],
+        endISO: state.filters.dateRange.end.toISOString().split('T')[0]
+      });
     } else {
       // Fallback
       state.filters.dateRange.start = new Date('2016-01-01');
@@ -97,6 +105,8 @@ function buildFilterQueryString() {
   if (state.filters.dateRange.end) {
     params.append('endDate', state.filters.dateRange.end.toISOString().split('T')[0]);
   }
+  
+  console.log('🔍 Query string gerada:', params.toString());
   
   return params.toString();
 }
@@ -171,6 +181,10 @@ async function updateFilterCards(queryString) {
     
     const data = await response.json();
     
+    // Debug logging
+    console.log('📊 Dados recebidos do backend:', data);
+    console.log(`Total: ${data.total}, Mulheres: ${data.women.count}, Homens: ${data.men.count}`);
+    
     document.getElementById('womenCount').textContent = data.women.count;
     document.getElementById('womenPercent').textContent = `${data.women.percent}%`;
     
@@ -212,11 +226,11 @@ function createAccidentsPerMonthChart() {
       datasets: [{
         label: 'Acidentes',
         data: [],
-        borderColor: '#FA003F',
-        backgroundColor: 'rgba(250, 0, 63, 0.1)',
+        borderColor: '#FF0000',
+        backgroundColor: 'rgba(255, 0, 0, 0.1)',
         fill: true,
         tension: 0.4,
-        pointBackgroundColor: '#FA003F',
+        pointBackgroundColor: '#FF0000',
         pointRadius: 5,
         pointHoverRadius: 7
       }]
@@ -230,26 +244,17 @@ function createAccidentsPerMonthChart() {
           display: false
         },
         tooltip: {
+          backgroundColor: 'rgba(0, 0, 0, 0.8)',
+          padding: 12,
+          titleFont: {
+            size: 14,
+            weight: 'bold'
+          },
+          bodyFont: {
+            size: 13
+          },
+          cornerRadius: 6,
           callbacks: {
-            title: function(context) {
-              // Converter label de "2016-01" para "Jan/2016"
-              const label = context[0].label;
-              if (!label || !label.includes('-')) return label;
-              
-              const parts = label.split('-');
-              if (parts.length !== 2) return label;
-              
-              const year = parts[0];
-              const month = parts[1];
-              const monthNames = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 
-                                  'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
-              const monthIndex = parseInt(month, 10) - 1;
-              
-              if (monthIndex >= 0 && monthIndex < 12) {
-                return `${monthNames[monthIndex]}/${year}`;
-              }
-              return label;
-            },
             label: function(context) {
               return `Acidentes: ${context.parsed.y}`;
             }
@@ -260,12 +265,18 @@ function createAccidentsPerMonthChart() {
         y: {
           beginAtZero: true,
           grid: {
-            color: '#E5E7EB'
+            color: '#2D2D2D'
+          },
+          ticks: {
+            color: '#D1D5DB'
           }
         },
         x: {
           grid: {
             display: false
+          },
+          ticks: {
+            color: '#D1D5DB'
           }
         }
       }
@@ -282,9 +293,9 @@ function createAccidentPotentialChart() {
       labels: ['Mineração', 'Metalurgia', 'Outros'],
       datasets: [{
         data: [0, 0, 0],
-        backgroundColor: ['#FA003F', '#4F46E5', '#10B981'],
+        backgroundColor: ['#FF0000', '#4F46E5', '#10B981'],
         borderWidth: 2,
-        borderColor: '#fff'
+        borderColor: '#1A1A1A'
       }]
     },
     options: {
@@ -331,7 +342,7 @@ function createAccidentsByLocationChart() {
       datasets: [{
         label: 'Acidentes',
         data: [],
-        backgroundColor: '#FA003F',
+        backgroundColor: '#FF0000',
         borderRadius: 8
       }]
     },
@@ -348,12 +359,18 @@ function createAccidentsByLocationChart() {
         y: {
           beginAtZero: true,
           grid: {
-            color: '#E5E7EB'
+            color: '#2D2D2D'
+          },
+          ticks: {
+            color: '#D1D5DB'
           }
         },
         x: {
           grid: {
             display: false
+          },
+          ticks: {
+            color: '#D1D5DB'
           }
         }
       }
@@ -409,7 +426,7 @@ async function updatePotentialChart(queryString = null) {
     
     // Update legend
     const legendHtml = data.labels.map((label, index) => {
-      const colors = ['#FA003F', '#4F46E5', '#10B981'];
+      const colors = ['#FF0000', '#4F46E5', '#10B981'];
       return `
         <div class="legend-item">
           <span class="legend-color" style="background: ${colors[index]};"></span>
@@ -449,93 +466,74 @@ async function updateBodyMap(queryString = null) {
     const response = await fetch(`/api/heatmap/bodyparts?${queryString}`);
     if (!response.ok) throw new Error('Erro ao buscar dados do mapa de calor');
     
-    const data = await response.json();
+    const result = await response.json();
+    const data = result.bodyParts || result;
+    console.log('Dados do heatmap recebidos no dashboard:', data);
     
-    // Inicializar contadores
-    const bodyPartCounts = {
-      'hands': 0,
-      'feet': 0,
-      'left-leg': 0,
-      'right-leg': 0,
-      'face': 0,
-      'neck': 0,
-      'left-arm': 0,
-      'right-arm': 0,
-      'trunk': 0
+    const bodyPartMap = {
+      'hands': ['Mãos e Dedos', 'Dedos', 'Mão', 'Mão Esquerda', 'Mão Direita', 'Mãos', 'Dedo'],
+      'feet': ['Pés e Dedos dos Pés', 'Tornozelo', 'Pé', 'Pé Esquerdo', 'Pé Direito', 'Pés'],
+      'eyes': ['Olhos', 'Olho'],
+      'head': ['Cabeça', 'Face', 'Crânio', 'Rosto', 'Orelha'],
+      'legs': ['Joelho', 'Perna', 'Coxa', 'Perna Esquerda', 'Perna Direita', 'Pernas'],
+      'trunk': ['Tronco', 'Costas', 'Peito', 'Abdômen', 'Abdomen', 'Tórax', 'Quadril', 'Pescoço'],
+      'arms-left': ['Braço', 'Cotovelo', 'Antebraço', 'Braço Esquerdo', 'Braços'],
+      'arms-right': ['Braço', 'Cotovelo', 'Antebraço', 'Braço Direito', 'Braços']
     };
-    
-    // Mapear partes do corpo em português para as partes do SVG
-    const bodyPartMapping = {
-      'Face': 'face',
-      'Cabeça': 'face',
-      'Olhos': 'face',
-      'Olho Esquerdo': 'face',
-      'Olho Direito': 'face',
-      'Pescoço': 'neck',
-      'Tronco': 'trunk',
-      'Tórax': 'trunk',
-      'Abdômen': 'trunk',
-      'Costas': 'trunk',
-      'Mão Esquerda': 'hands',
-      'Mão Direita': 'hands',
-      'Mãos': 'hands',
-      'Dedo': 'hands',
-      'Dedos': 'hands',
-      'Braço Esquerdo': 'left-arm',
-      'Braço Direito': 'right-arm',
-      'Perna Esquerda': 'left-leg',
-      'Perna Direita': 'right-leg',
-      'Pernas': 'right-leg',
-      'Pé Esquerdo': 'feet',
-      'Pé Direito': 'feet',
-      'Pés': 'feet',
-      'Tornozelo': 'feet',
-      'Joelho': 'right-leg'
-    };
-    
-    // Contar partes do corpo
-    data.bodyParts.forEach(item => {
-      const svgPart = bodyPartMapping[item.part];
-      if (svgPart && bodyPartCounts[svgPart] !== undefined) {
-        bodyPartCounts[svgPart] += item.count;
+
+    // Calcular totais e encontrar máximo para normalização
+    const bodyCounts = {};
+    let maxCount = 0;
+
+    for (const [svgId, bodyParts] of Object.entries(bodyPartMap)) {
+      const element = document.getElementById(svgId);
+      if (!element) {
+        console.log(`Elemento ${svgId} não encontrado no dashboard`);
+        continue;
       }
-    });
-    
-    // Calcular total para porcentagem
-    const totalBodyParts = Object.values(bodyPartCounts).reduce((a, b) => a + b, 0);
-    
-    // Mapear nomes das partes do corpo para português
-    const bodyPartNames = {
-      'hands': 'Mãos/Dedos',
-      'feet': 'Pés',
-      'left-leg': 'Perna Esquerda',
-      'right-leg': 'Perna Direita',
-      'face': 'Face/Cabeça',
-      'neck': 'Pescoço',
-      'left-arm': 'Braço Esquerdo',
-      'right-arm': 'Braço Direito',
-      'trunk': 'Tronco'
-    };
-    
-    // Update SVG elements
-    Object.keys(bodyPartCounts).forEach(part => {
-      const elements = document.querySelectorAll(`[data-part="${part}"]`);
-      const count = bodyPartCounts[part];
-      const percentage = totalBodyParts > 0 ? ((count / totalBodyParts) * 100).toFixed(1) : 0;
-      let intensity = 'none';
 
-      if (count >= 15) intensity = 'high';
-      else if (count >= 8) intensity = 'medium';
-      else if (count >= 3) intensity = 'low';
-      else if (count >= 1) intensity = 'minimal';
+      const count = bodyParts.reduce((sum, part) => {
+        const found = data.find(d => d.part === part || d.body_part === part);
+        return sum + (found ? found.count : 0);
+      }, 0);
 
-      elements.forEach(el => {
-        el.setAttribute('data-intensity', intensity);
-        el.setAttribute('data-count', count);
-        el.setAttribute('data-percentage', percentage);
-        el.setAttribute('data-name', bodyPartNames[part]);
-      });
-    });
+      bodyCounts[svgId] = count;
+      maxCount = Math.max(maxCount, count);
+      
+      element.setAttribute('data-count', count);
+      element.setAttribute('data-name', element.getAttribute('data-name') || svgId);
+    }
+
+    // SEGUNDO LOOP: Aplicar níveis de calor depois de calcular o maxCount
+    console.log('Max count encontrado no dashboard:', maxCount);
+    
+    for (const [svgId, count] of Object.entries(bodyCounts)) {
+      const element = document.getElementById(svgId);
+      if (!element) continue;
+
+      let heatLevel = 0;
+      if (count > 0 && maxCount > 0) {
+        const percentage = (count / maxCount) * 100;
+        
+        if (percentage <= 25) {
+          // Amarelo: 1-3
+          heatLevel = Math.max(1, Math.ceil((percentage / 25) * 3));
+        } else if (percentage <= 50) {
+          // Laranja: 4-5
+          heatLevel = 4 + Math.floor(((percentage - 25) / 25) * 2);
+        } else if (percentage <= 75) {
+          // Vermelho Claro: 6-7
+          heatLevel = 6 + Math.floor(((percentage - 50) / 25) * 2);
+        } else {
+          // Vermelho Forte: 8-10
+          heatLevel = 8 + Math.floor(((percentage - 75) / 25) * 3);
+          heatLevel = Math.min(10, heatLevel); // Garantir que não passe de 10
+        }
+      }
+      
+      element.setAttribute('data-level', heatLevel);
+      console.log(`Dashboard - ${svgId}: count=${count}, percentage=${((count/maxCount)*100).toFixed(1)}%, heatLevel=${heatLevel}`);
+    }
     
     // Configurar tooltips customizados para o mapa de calor
     setupBodyMapTooltips();
@@ -546,28 +544,48 @@ async function updateBodyMap(queryString = null) {
 
 // Configurar tooltips para o mapa de calor
 function setupBodyMapTooltips() {
-  const tooltip = document.getElementById('bodyMapTooltip');
-  const bodyParts = document.querySelectorAll('.body-part');
+  const tooltip = document.getElementById('body-tooltip');
+  let selectedPart = null;
   
-  bodyParts.forEach(part => {
+  document.querySelectorAll('.body-part').forEach(part => {
+    const count = part.getAttribute('data-count') || '0';
+    const name = part.getAttribute('data-name') || 'Desconhecido';
+    
+    // Hover - mostrar tooltip
     part.addEventListener('mouseenter', (e) => {
-      const name = part.getAttribute('data-name');
-      const count = part.getAttribute('data-count');
-      const percentage = part.getAttribute('data-percentage');
+      const rect = part.getBoundingClientRect();
+      const svgRect = document.getElementById('bodyHeatmap').getBoundingClientRect();
       
-      if (name && count !== null) {
-        tooltip.textContent = `${name}: ${count} (${percentage}%)`;
-        tooltip.classList.add('active');
-      }
+      tooltip.textContent = `${name}: ${count} acidentes`;
+      tooltip.classList.add('show');
+      
+      // Posicionar tooltip
+      const tooltipX = rect.left + rect.width / 2 - svgRect.left;
+      const tooltipY = rect.top - svgRect.top - 10;
+      tooltip.style.left = tooltipX + 'px';
+      tooltip.style.top = tooltipY + 'px';
+      tooltip.style.transform = 'translate(-50%, -100%)';
     });
-    
-    part.addEventListener('mousemove', (e) => {
-      tooltip.style.left = `${e.clientX}px`;
-      tooltip.style.top = `${e.clientY}px`;
-    });
-    
+
     part.addEventListener('mouseleave', () => {
-      tooltip.classList.remove('active');
+      tooltip.classList.remove('show');
+    });
+
+    // Click - selecionar/deselecionar
+    part.addEventListener('click', () => {
+      // Remover seleção anterior
+      if (selectedPart && selectedPart !== part) {
+        selectedPart.classList.remove('selected');
+      }
+
+      // Alternar seleção atual
+      if (selectedPart === part) {
+        part.classList.remove('selected');
+        selectedPart = null;
+      } else {
+        part.classList.add('selected');
+        selectedPart = part;
+      }
     });
   });
 }
