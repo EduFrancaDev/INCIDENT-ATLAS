@@ -3,7 +3,6 @@
 ![Python](https://img.shields.io/badge/Python-3.8+-blue.svg)
 ![Flask](https://img.shields.io/badge/Flask-3.0+-green.svg)
 ![DuckDB](https://img.shields.io/badge/DuckDB-Latest-yellow.svg)
-![License](https://img.shields.io/badge/License-MIT-red.svg)
 
 Sistema de análise e visualização de acidentes industriais: desenvolvido para auxiliar na gestão de segurança do trabalho em ambientes industriais, com foco em mineração e metalurgia.
 
