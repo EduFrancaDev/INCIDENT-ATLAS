@@ -1,175 +1,175 @@
-// Global data storage
-let globalData = null;
+// Armazenamento global de dados
+let dadosGlobais = null;
 
-// Initialize home page
+// Inicializar página inicial
 document.addEventListener('DOMContentLoaded', async () => {
-  await loadData();
-  initializeCharts();
-  initializeBodyHeatmap();
-  setupGenderFilter();
-  setupContextTooltips();
-  await loadNextActions();
+  await carregarDados();
+  inicializarGraficos();
+  inicializarMapaCalorCorpo();
+  configurarFiltroGenero();
+  configurarTooltipsContexto();
+  await carregarProximasAcoes();
 });
 
-// Load data from API
-async function loadData() {
+// Carregar dados da API
+async function carregarDados() {
   try {
-    const response = await fetch('/api/statistics');
-    if (!response.ok) throw new Error('Erro ao carregar estatísticas');
+    const resposta = await fetch('/api/statistics');
+    if (!resposta.ok) throw new Error('Erro ao carregar estatísticas');
     
-    globalData = await response.json();
+    dadosGlobais = await resposta.json();
     
-    // Update all sections
-    updateHeroSection(globalData);
-    updateContextCards(globalData);
-    await updateSafetyCounters();
+    // Atualizar todas as seções
+    atualizarSecaoHeroi(dadosGlobais);
+    atualizarCardsContexto(dadosGlobais);
+    await atualizarContadoresSeguranca();
     
-  } catch (error) {
-    console.error('Erro ao carregar dados:', error);
+  } catch (erro) {
+    console.error('Erro ao carregar dados:', erro);
   }
 }
 
-function updateHeroSection(data) {
-  // Calculate total accidents
-  const total = data.gender.reduce((sum, g) => sum + g.count, 0);
+function atualizarSecaoHeroi(dados) {
+  // Calcular total de acidentes
+  const total = dados.gender.reduce((soma, g) => soma + g.count, 0);
   
-  // Update hero title and subtitle
+  // Atualizar título e subtítulo do herói
   document.getElementById('totalAccidents').textContent = `${total} acidentes`;
   document.getElementById('heroSubtitle').textContent = `${total} histórias. 1 missão.`;
 }
 
-function updateContextCards(data) {
-  // Calculate total for percentages
-  const total = data.gender.reduce((sum, g) => sum + g.count, 0);
+function atualizarCardsContexto(dados) {
+  // Calcular total para percentuais
+  const total = dados.gender.reduce((soma, g) => soma + g.count, 0);
   
-  // Update global operations by country
-  if (data.countries && data.countries.length > 0) {
+  // Atualizar operações globais por país
+  if (dados.countries && dados.countries.length > 0) {
     // Brasil
-    const brasilData = data.countries.find(c => c.country === 'Brasil' || c.country === 'Brazil');
-    if (brasilData && document.getElementById('brIncidents')) {
-      document.getElementById('brIncidents').textContent = brasilData.count;
+    const dadosBrasil = dados.countries.find(c => c.country === 'Brasil' || c.country === 'Brazil');
+    if (dadosBrasil && document.getElementById('brIncidents')) {
+      document.getElementById('brIncidents').textContent = dadosBrasil.count;
     }
     
     // EUA
-    const usaData = data.countries.find(c => c.country === 'EUA' || c.country === 'USA' || c.country === 'United States');
-    if (usaData && document.getElementById('usIncidents')) {
-      document.getElementById('usIncidents').textContent = usaData.count;
+    const dadosEUA = dados.countries.find(c => c.country === 'EUA' || c.country === 'USA' || c.country === 'United States');
+    if (dadosEUA && document.getElementById('usIncidents')) {
+      document.getElementById('usIncidents').textContent = dadosEUA.count;
     }
     
     // Canadá
-    const canadaData = data.countries.find(c => c.country === 'Canadá' || c.country === 'Canada');
-    if (canadaData && document.getElementById('caIncidents')) {
-      document.getElementById('caIncidents').textContent = canadaData.count;
+    const dadosCanada = dados.countries.find(c => c.country === 'Canadá' || c.country === 'Canada');
+    if (dadosCanada && document.getElementById('caIncidents')) {
+      document.getElementById('caIncidents').textContent = dadosCanada.count;
     }
   }
   
-  // Women count (if exists)
-  const womenData = data.gender.find(g => g.gender === 'Mulher') || { count: 0 };
-  const womenPercent = total > 0 ? (womenData.count / total * 100).toFixed(1) : 0;
+  // Contagem de mulheres (se existir)
+  const dadosMulheres = dados.gender.find(g => g.gender === 'Mulher') || { count: 0 };
+  const percentualMulheres = total > 0 ? (dadosMulheres.count / total * 100).toFixed(1) : 0;
   if (document.getElementById('womenCount')) {
-    document.getElementById('womenCount').textContent = womenData.count;
-    document.getElementById('womenPercent').textContent = `${womenPercent}%`;
-    // Update tooltip
-    const womenPercentTooltip = document.getElementById('womenPercentTooltip');
-    if (womenPercentTooltip) {
-      womenPercentTooltip.textContent = `${womenPercent}%`;
+    document.getElementById('womenCount').textContent = dadosMulheres.count;
+    document.getElementById('womenPercent').textContent = `${percentualMulheres}%`;
+    // Atualizar tooltip
+    const tooltipPercentualMulheres = document.getElementById('womenPercentTooltip');
+    if (tooltipPercentualMulheres) {
+      tooltipPercentualMulheres.textContent = `${percentualMulheres}%`;
     }
   }
   
-  // Men count (if exists)
-  const menData = data.gender.find(g => g.gender === 'Homem') || { count: 0 };
-  const menPercent = total > 0 ? (menData.count / total * 100).toFixed(1) : 0;
+  // Contagem de homens (se existir)
+  const dadosHomens = dados.gender.find(g => g.gender === 'Homem') || { count: 0 };
+  const percentualHomens = total > 0 ? (dadosHomens.count / total * 100).toFixed(1) : 0;
   if (document.getElementById('menCount')) {
-    document.getElementById('menCount').textContent = menData.count;
-    document.getElementById('menPercent').textContent = `${menPercent}%`;
-    // Update tooltip
-    const menPercentTooltip = document.getElementById('menPercentTooltip');
-    if (menPercentTooltip) {
-      menPercentTooltip.textContent = `${menPercent}%`;
+    document.getElementById('menCount').textContent = dadosHomens.count;
+    document.getElementById('menPercent').textContent = `${percentualHomens}%`;
+    // Atualizar tooltip
+    const tooltipPercentualHomens = document.getElementById('menPercentTooltip');
+    if (tooltipPercentualHomens) {
+      tooltipPercentualHomens.textContent = `${percentualHomens}%`;
     }
   }
   
-  // Countries (if exists)
+  // Países (se existir)
   if (document.getElementById('countriesCount')) {
-    document.getElementById('countriesCount').textContent = data.countries.length;
-    const countryNames = data.countries.map(c => c.country).slice(0, 3).join(', ');
-    document.getElementById('countriesNames').textContent = countryNames;
+    document.getElementById('countriesCount').textContent = dados.countries.length;
+    const nomesPaises = dados.countries.map(c => c.country).slice(0, 3).join(', ');
+    document.getElementById('countriesNames').textContent = nomesPaises;
   }
   
-  // Period (if exists)
-  if (data.months && data.months.length > 0) {
-    const months = data.months.map(m => m.month);
-    const startDate = new Date(months[0] + '-01');
-    const endDate = new Date(months[months.length - 1] + '-01');
+  // Período (se existir)
+  if (dados.months && dados.months.length > 0) {
+    const meses = dados.months.map(m => m.month);
+    const dataInicio = new Date(meses[0] + '-01');
+    const dataFim = new Date(meses[meses.length - 1] + '-01');
     
-    // Calculate days
-    const daysDiff = Math.ceil((endDate - startDate) / (1000 * 60 * 60 * 24));
+    // Calcular dias
+    const diferencaDias = Math.ceil((dataFim - dataInicio) / (1000 * 60 * 60 * 24));
     if (document.getElementById('periodDays')) {
-      document.getElementById('periodDays').textContent = `${daysDiff} dias`;
-      // Update tooltip
-      const periodDaysTooltip = document.getElementById('periodDaysTooltip');
-      if (periodDaysTooltip) {
-        periodDaysTooltip.textContent = `${daysDiff} dias`;
+      document.getElementById('periodDays').textContent = `${diferencaDias} dias`;
+      // Atualizar tooltip
+      const tooltipDiasPeriodo = document.getElementById('periodDaysTooltip');
+      if (tooltipDiasPeriodo) {
+        tooltipDiasPeriodo.textContent = `${diferencaDias} dias`;
       }
     }
     
-    // Format dates
-    const startMonth = startDate.toLocaleDateString('pt-BR', { month: 'short', year: 'numeric' });
-    const endMonth = endDate.toLocaleDateString('pt-BR', { month: 'short', year: 'numeric' });
+    // Formatar datas
+    const mesInicio = dataInicio.toLocaleDateString('pt-BR', { month: 'short', year: 'numeric' });
+    const mesFim = dataFim.toLocaleDateString('pt-BR', { month: 'short', year: 'numeric' });
     if (document.getElementById('periodRange')) {
-      document.getElementById('periodRange').textContent = `${startMonth.charAt(0).toUpperCase() + startMonth.slice(1)} - ${endMonth.charAt(0).toUpperCase() + endMonth.slice(1)}`;
+      document.getElementById('periodRange').textContent = `${mesInicio.charAt(0).toUpperCase() + mesInicio.slice(1)} - ${mesFim.charAt(0).toUpperCase() + mesFim.slice(1)}`;
     }
     
-    // Update last update
-    const today = new Date();
-    const daysAgo = Math.ceil((today - endDate) / (1000 * 60 * 60 * 24));
+    // Atualizar última atualização
+    const hoje = new Date();
+    const diasAtras = Math.ceil((hoje - dataFim) / (1000 * 60 * 60 * 24));
     if (document.getElementById('lastUpdate')) {
-      document.getElementById('lastUpdate').textContent = `Última atualização: ${daysAgo} dias atrás`;
+      document.getElementById('lastUpdate').textContent = `Última atualização: ${diasAtras} dias atrás`;
     }
   }
 }
 
-// Update hero stats
-async function updateSafetyCounters() {
+// Atualizar estatísticas do herói
+async function atualizarContadoresSeguranca() {
   try {
-    const response = await fetch('/api/safety-record');
-    if (!response.ok) {
+    const resposta = await fetch('/api/safety-record');
+    if (!resposta.ok) {
       throw new Error('Erro ao carregar dados de segurança');
     }
     
-    const data = await response.json();
-    const currentDays = data.currentDaysSinceLast;
-    const recordDays = data.recordDays;
+    const dados = await resposta.json();
+    const diasAtuais = dados.currentDaysSinceLast;
+    const diasRecorde = dados.recordDays;
     
-    document.getElementById('daysSinceAccident').textContent = currentDays;
-    document.getElementById('recordDays').textContent = recordDays;
+    document.getElementById('daysSinceAccident').textContent = diasAtuais;
+    document.getElementById('recordDays').textContent = diasRecorde;
     
-    const progress = recordDays > 0 ? (currentDays / recordDays) * 100 : 0;
-    const daysToRecord = Math.max(0, recordDays - currentDays);
+    const progresso = diasRecorde > 0 ? (diasAtuais / diasRecorde) * 100 : 0;
+    const diasParaRecorde = Math.max(0, diasRecorde - diasAtuais);
     
     // Se já bateu o recorde, mostrar como 100%
-    if (currentDays >= recordDays) {
+    if (diasAtuais >= diasRecorde) {
       document.getElementById('progressPercent').textContent = '100%';
       document.getElementById('progressFill').style.width = '100%';
-      const excesso = currentDays - recordDays;
+      const excesso = diasAtuais - diasRecorde;
       document.getElementById('daysToRecord').textContent = excesso;
       
-      const messageEl = document.querySelector('.safety-card:nth-child(2) .safety-message');
-      if (messageEl) {
-        messageEl.textContent = `Parabéns! Você bateu o recorde por ${excesso} dias!`;
+      const elementoMensagem = document.querySelector('.safety-card:nth-child(2) .safety-message');
+      if (elementoMensagem) {
+        elementoMensagem.textContent = `Parabéns! Você bateu o recorde por ${excesso} dias!`;
       }
     } else {
-      document.getElementById('progressPercent').textContent = `${Math.round(progress)}%`;
-      document.getElementById('progressFill').style.width = `${progress}%`;
-      document.getElementById('daysToRecord').textContent = daysToRecord;
+      document.getElementById('progressPercent').textContent = `${Math.round(progresso)}%`;
+      document.getElementById('progressFill').style.width = `${progresso}%`;
+      document.getElementById('daysToRecord').textContent = diasParaRecorde;
     }
-  } catch (error) {
-    console.error('Erro ao atualizar contadores de segurança:', error);
+  } catch (erro) {
+    console.error('Erro ao atualizar contadores de segurança:', erro);
   }
 }
 
-// Body part mapping
-const bodyPartMapping = {
+// Mapeamento de partes do corpo
+const mapeamentoPartesCorpo = {
   'Face': 'face',
   'Rosto': 'face',
   'Pescoço': 'neck',
@@ -182,36 +182,36 @@ const bodyPartMapping = {
   'Braço': 'right-arm',
   'Mão Esquerda': 'left-hand',
   'Mão Direita': 'right-hand',
-  'Mãos': 'left-hand', // Will also update right-hand
+  'Mãos': 'left-hand', // Também atualizará right-hand
   'Perna Esquerda': 'left-leg',
   'Perna Direita': 'right-leg',
   'Perna': 'right-leg',
   'Pé Esquerdo': 'left-foot',
   'Pé Direito': 'right-foot',
-  'Pés': 'left-foot' // Will also update right-foot
+  'Pés': 'left-foot' // Também atualizará right-foot
 };
 
-// Initialize body heatmap
-function initializeBodyHeatmap(genderFilter = 'all') {
-  const tooltip = document.getElementById('body-tooltip');
-  let selectedPart = null;
+// Inicializar mapa de calor do corpo
+function inicializarMapaCalorCorpo(filtroGenero = 'all') {
+  const dicaFerramenta = document.getElementById('body-tooltip');
+  let parteSelecionada = null;
 
   // Construir URL com filtro de gênero
   let url = '/api/heatmap/bodyparts';
-  if (genderFilter !== 'all') {
-    const genderParam = genderFilter === 'male' ? 'Homem' : 'Mulher';
-    url += `?gender=${encodeURIComponent(genderParam)}`;
+  if (filtroGenero !== 'all') {
+    const parametroGenero = filtroGenero === 'male' ? 'Homem' : 'Mulher';
+    url += `?gender=${encodeURIComponent(parametroGenero)}`;
   }
 
-  console.log('Buscando dados com filtro:', genderFilter, 'URL:', url);
+  console.log('Buscando dados com filtro:', filtroGenero, 'URL:', url);
 
   fetch(url)
-    .then(response => response.json())
-    .then(result => {
-      const data = result.bodyParts || result;
-      console.log('Dados do heatmap recebidos:', data);
+    .then(resposta => resposta.json())
+    .then(resultado => {
+      const dados = resultado.bodyParts || resultado;
+      console.log('Dados do heatmap recebidos:', dados);
       
-      const bodyPartMap = {
+      const mapaPartesCorpo = {
         'hands': ['Mãos e Dedos', 'Dedos', 'Mão', 'Mão Esquerda', 'Mão Direita', 'Mãos', 'Dedo'],
         'feet': ['Pés e Dedos dos Pés', 'Tornozelo', 'Pé', 'Pé Esquerdo', 'Pé Direito', 'Pés'],
         'eyes': ['Olhos', 'Olho'],
@@ -223,216 +223,216 @@ function initializeBodyHeatmap(genderFilter = 'all') {
       };
 
       // Calcular totais e encontrar máximo para normalização
-      const bodyCounts = {};
-      let maxCount = 0;
+      const contagensCorpo = {};
+      let contagemMaxima = 0;
 
-      for (const [svgId, bodyParts] of Object.entries(bodyPartMap)) {
-        const element = document.getElementById(svgId);
-        if (!element) {
-          console.log(`Elemento ${svgId} não encontrado`);
+      for (const [idSvg, partesCorpo] of Object.entries(mapaPartesCorpo)) {
+        const elemento = document.getElementById(idSvg);
+        if (!elemento) {
+          console.log(`Elemento ${idSvg} não encontrado`);
           continue;
         }
 
-        const count = bodyParts.reduce((sum, part) => {
-          const found = data.find(d => d.part === part || d.body_part === part);
-          return sum + (found ? found.count : 0);
+        const contagem = partesCorpo.reduce((soma, parte) => {
+          const encontrado = dados.find(d => d.part === parte || d.body_part === parte);
+          return soma + (encontrado ? encontrado.count : 0);
         }, 0);
 
-        bodyCounts[svgId] = count;
-        maxCount = Math.max(maxCount, count);
+        contagensCorpo[idSvg] = contagem;
+        contagemMaxima = Math.max(contagemMaxima, contagem);
         
-        element.setAttribute('data-count', count);
-        element.setAttribute('data-name', element.getAttribute('data-name') || svgId);
+        elemento.setAttribute('data-count', contagem);
+        elemento.setAttribute('data-name', elemento.getAttribute('data-name') || idSvg);
       }
 
-      // Calcular níveis de calor após ter o maxCount
+      // Calcular níveis de calor após ter a contagemMaxima
       // 0: sem dados (cinza)
       // 1-3: Amarelo (1-25%) - Mínimo
       // 4-5: Laranja (26-50%) - Baixo
       // 6-7: Vermelho Claro (51-75%) - Médio
       // 8-10: Vermelho Forte (76-100%) - Alto
-      for (const [svgId, count] of Object.entries(bodyCounts)) {
-        const element = document.getElementById(svgId);
-        if (!element) continue;
+      for (const [idSvg, contagem] of Object.entries(contagensCorpo)) {
+        const elemento = document.getElementById(idSvg);
+        if (!elemento) continue;
 
-        let heatLevel = 0;
-        if (count > 0 && maxCount > 0) {
-          const percentage = (count / maxCount) * 100;
+        let nivelCalor = 0;
+        if (contagem > 0 && contagemMaxima > 0) {
+          const percentual = (contagem / contagemMaxima) * 100;
           
-          if (percentage <= 25) {
+          if (percentual <= 25) {
             // Amarelo: 1-3
-            heatLevel = Math.max(1, Math.ceil((percentage / 25) * 3));
-          } else if (percentage <= 50) {
+            nivelCalor = Math.max(1, Math.ceil((percentual / 25) * 3));
+          } else if (percentual <= 50) {
             // Laranja: 4-5
-            heatLevel = 4 + Math.floor(((percentage - 25) / 25) * 2);
-          } else if (percentage <= 75) {
+            nivelCalor = 4 + Math.floor(((percentual - 25) / 25) * 2);
+          } else if (percentual <= 75) {
             // Vermelho Claro: 6-7
-            heatLevel = 6 + Math.floor(((percentage - 50) / 25) * 2);
+            nivelCalor = 6 + Math.floor(((percentual - 50) / 25) * 2);
           } else {
             // Vermelho Forte: 8-10
-            heatLevel = 8 + Math.floor(((percentage - 75) / 25) * 3);
-            heatLevel = Math.min(10, heatLevel); // Garantir que não passe de 10
+            nivelCalor = 8 + Math.floor(((percentual - 75) / 25) * 3);
+            nivelCalor = Math.min(10, nivelCalor); // Garantir que não passe de 10
           }
         }
         
-        element.setAttribute('data-level', heatLevel);
-        console.log(`${svgId}: count=${count}, maxCount=${maxCount}, percentage=${((count/maxCount)*100).toFixed(1)}%, heatLevel=${heatLevel}`);
+        elemento.setAttribute('data-level', nivelCalor);
+        console.log(`${idSvg}: count=${contagem}, maxCount=${contagemMaxima}, percentage=${((contagem/contagemMaxima)*100).toFixed(1)}%, heatLevel=${nivelCalor}`);
       }
 
       // Adicionar interatividade a cada parte do corpo
-      document.querySelectorAll('.body-part').forEach(part => {
-        const count = part.getAttribute('data-count') || '0';
-        const name = part.getAttribute('data-name') || 'Desconhecido';
+      document.querySelectorAll('.body-part').forEach(parte => {
+        const contagem = parte.getAttribute('data-count') || '0';
+        const nome = parte.getAttribute('data-name') || 'Desconhecido';
         
         // Hover - mostrar tooltip
-        part.addEventListener('mouseenter', (e) => {
-          const rect = part.getBoundingClientRect();
-          const svgRect = document.getElementById('bodyHeatmap').getBoundingClientRect();
+        parte.addEventListener('mouseenter', (e) => {
+          const retangulo = parte.getBoundingClientRect();
+          const retanguloSvg = document.getElementById('bodyHeatmap').getBoundingClientRect();
           
-          tooltip.textContent = `${name}: ${count} acidentes`;
-          tooltip.classList.add('show');
+          dicaFerramenta.textContent = `${nome}: ${contagem} acidentes`;
+          dicaFerramenta.classList.add('show');
           
           // Posicionar tooltip
-          const tooltipX = rect.left + rect.width / 2 - svgRect.left;
-          const tooltipY = rect.top - svgRect.top - 10;
-          tooltip.style.left = tooltipX + 'px';
-          tooltip.style.top = tooltipY + 'px';
-          tooltip.style.transform = 'translate(-50%, -100%)';
+          const tooltipX = retangulo.left + retangulo.width / 2 - retanguloSvg.left;
+          const tooltipY = retangulo.top - retanguloSvg.top - 10;
+          dicaFerramenta.style.left = tooltipX + 'px';
+          dicaFerramenta.style.top = tooltipY + 'px';
+          dicaFerramenta.style.transform = 'translate(-50%, -100%)';
         });
 
-        part.addEventListener('mouseleave', () => {
-          tooltip.classList.remove('show');
+        parte.addEventListener('mouseleave', () => {
+          dicaFerramenta.classList.remove('show');
         });
 
         // Click - selecionar/deselecionar
-        part.addEventListener('click', () => {
+        parte.addEventListener('click', () => {
           // Remover seleção anterior
-          if (selectedPart && selectedPart !== part) {
-            selectedPart.classList.remove('selected');
+          if (parteSelecionada && parteSelecionada !== parte) {
+            parteSelecionada.classList.remove('selected');
           }
 
           // Alternar seleção atual
-          if (selectedPart === part) {
-            part.classList.remove('selected');
-            selectedPart = null;
+          if (parteSelecionada === parte) {
+            parte.classList.remove('selected');
+            parteSelecionada = null;
           } else {
-            part.classList.add('selected');
-            selectedPart = part;
+            parte.classList.add('selected');
+            parteSelecionada = parte;
           }
         });
       });
 
       // Atualizar os cards de estatísticas
-      const totalInjuries = Object.values(bodyCounts).reduce((sum, count) => sum + count, 0);
-      console.log('Total de lesões:', totalInjuries);
-      console.log('Contagens por parte:', bodyCounts);
+      const totalLesoes = Object.values(contagensCorpo).reduce((soma, contagem) => soma + contagem, 0);
+      console.log('Total de lesões:', totalLesoes);
+      console.log('Contagens por parte:', contagensCorpo);
       
       // Mãos
-      const handsCount = bodyCounts['hands'] || 0;
-      const handsPercent = totalInjuries > 0 ? ((handsCount / totalInjuries) * 100).toFixed(0) : 0;
-      const handsCountEl = document.querySelector('.injury-stat-card.critical .stat-number');
-      const handsPercentEl = document.querySelector('.injury-stat-card.critical .stat-percent');
-      const handsFillEl = document.querySelector('.injury-stat-card.critical .injury-stat-fill');
+      const contagemMaos = contagensCorpo['hands'] || 0;
+      const percentualMaos = totalLesoes > 0 ? ((contagemMaos / totalLesoes) * 100).toFixed(0) : 0;
+      const elementoContagemMaos = document.querySelector('.injury-stat-card.critical .stat-number');
+      const elementoPercentualMaos = document.querySelector('.injury-stat-card.critical .stat-percent');
+      const elementoPreenchimentoMaos = document.querySelector('.injury-stat-card.critical .injury-stat-fill');
       
-      if (handsCountEl) handsCountEl.textContent = handsCount;
-      if (handsPercentEl) handsPercentEl.textContent = `${handsPercent}%`;
-      if (handsFillEl) handsFillEl.style.width = `${handsPercent}%`;
+      if (elementoContagemMaos) elementoContagemMaos.textContent = contagemMaos;
+      if (elementoPercentualMaos) elementoPercentualMaos.textContent = `${percentualMaos}%`;
+      if (elementoPreenchimentoMaos) elementoPreenchimentoMaos.style.width = `${percentualMaos}%`;
 
       // Pés
-      const feetCount = bodyCounts['feet'] || 0;
-      const feetPercent = totalInjuries > 0 ? ((feetCount / totalInjuries) * 100).toFixed(0) : 0;
-      const feetCountEl = document.querySelector('.injury-stat-card.medium .stat-number');
-      const feetPercentEl = document.querySelector('.injury-stat-card.medium .stat-percent');
-      const feetFillEl = document.querySelector('.injury-stat-card.medium .injury-stat-fill');
+      const contagemPes = contagensCorpo['feet'] || 0;
+      const percentualPes = totalLesoes > 0 ? ((contagemPes / totalLesoes) * 100).toFixed(0) : 0;
+      const elementoContagemPes = document.querySelector('.injury-stat-card.medium .stat-number');
+      const elementoPercentualPes = document.querySelector('.injury-stat-card.medium .stat-percent');
+      const elementoPreenchimentoPes = document.querySelector('.injury-stat-card.medium .injury-stat-fill');
       
-      if (feetCountEl) feetCountEl.textContent = feetCount;
-      if (feetPercentEl) feetPercentEl.textContent = `${feetPercent}%`;
-      if (feetFillEl) feetFillEl.style.width = `${feetPercent}%`;
+      if (elementoContagemPes) elementoContagemPes.textContent = contagemPes;
+      if (elementoPercentualPes) elementoPercentualPes.textContent = `${percentualPes}%`;
+      if (elementoPreenchimentoPes) elementoPreenchimentoPes.style.width = `${percentualPes}%`;
 
       // Olhos
-      const eyesCount = bodyCounts['eyes'] || 0;
-      const eyesPercent = totalInjuries > 0 ? ((eyesCount / totalInjuries) * 100).toFixed(0) : 0;
-      const eyesCountEl = document.querySelector('.injury-stat-card.low .stat-number');
-      const eyesPercentEl = document.querySelector('.injury-stat-card.low .stat-percent');
-      const eyesFillEl = document.querySelector('.injury-stat-card.low .injury-stat-fill');
+      const contagemOlhos = contagensCorpo['eyes'] || 0;
+      const percentualOlhos = totalLesoes > 0 ? ((contagemOlhos / totalLesoes) * 100).toFixed(0) : 0;
+      const elementoContagemOlhos = document.querySelector('.injury-stat-card.low .stat-number');
+      const elementoPercentualOlhos = document.querySelector('.injury-stat-card.low .stat-percent');
+      const elementoPreenchimentoOlhos = document.querySelector('.injury-stat-card.low .injury-stat-fill');
       
-      if (eyesCountEl) eyesCountEl.textContent = eyesCount;
-      if (eyesPercentEl) eyesPercentEl.textContent = `${eyesPercent}%`;
-      if (eyesFillEl) eyesFillEl.style.width = `${eyesPercent}%`;
+      if (elementoContagemOlhos) elementoContagemOlhos.textContent = contagemOlhos;
+      if (elementoPercentualOlhos) elementoPercentualOlhos.textContent = `${percentualOlhos}%`;
+      if (elementoPreenchimentoOlhos) elementoPreenchimentoOlhos.style.width = `${percentualOlhos}%`;
     })
-    .catch(error => console.error('Erro ao carregar dados do heatmap:', error));
+    .catch(erro => console.error('Erro ao carregar dados do heatmap:', erro));
 }
 
-// Setup gender filter buttons
-function setupGenderFilter() {
-  const filterButtons = document.querySelectorAll('.filter-btn');
+// Configurar botões de filtro de gênero
+function configurarFiltroGenero() {
+  const botoesFiltro = document.querySelectorAll('.filter-btn');
   
-  filterButtons.forEach(button => {
-    button.addEventListener('click', () => {
-      // Remove active class from all buttons
-      filterButtons.forEach(btn => btn.classList.remove('active'));
+  botoesFiltro.forEach(botao => {
+    botao.addEventListener('click', () => {
+      // Remover classe active de todos os botões
+      botoesFiltro.forEach(btn => btn.classList.remove('active'));
       
-      // Add active class to clicked button
-      button.classList.add('active');
+      // Adicionar classe active ao botão clicado
+      botao.classList.add('active');
       
-      // Get selected gender
-      const gender = button.getAttribute('data-gender');
+      // Obter gênero selecionado
+      const genero = botao.getAttribute('data-gender');
       
-      // Reload heatmap with filter
-      initializeBodyHeatmap(gender);
+      // Recarregar heatmap com filtro
+      inicializarMapaCalorCorpo(genero);
     });
   });
 }
 
-// Setup context card tooltips for mobile (touch support)
-function setupContextTooltips() {
+// Configurar tooltips dos cards de contexto para mobile (suporte a toque)
+function configurarTooltipsContexto() {
   // Verificar se é dispositivo touch
-  const isTouchDevice = () => {
+  const eDispositivoToque = () => {
     return ('ontouchstart' in window) || 
            (navigator.maxTouchPoints > 0) || 
            (navigator.msMaxTouchPoints > 0);
   };
   
   // Apenas adicionar comportamento de clique em dispositivos touch
-  if (!isTouchDevice()) {
+  if (!eDispositivoToque()) {
     return; // Em desktop, deixar o CSS hover funcionar naturalmente
   }
   
-  const contextCards = document.querySelectorAll('.context-card');
+  const cardsContexto = document.querySelectorAll('.context-card');
   
-  contextCards.forEach(card => {
-    const tooltip = card.querySelector('.context-tooltip');
-    if (!tooltip) return;
+  cardsContexto.forEach(card => {
+    const dicaFerramenta = card.querySelector('.context-tooltip');
+    if (!dicaFerramenta) return;
     
-    let tooltipVisible = false;
+    let dicaVisivel = false;
     
-    // Para dispositivos touch, toggle o tooltip no toque
+    // Para dispositivos touch, alternar o tooltip no toque
     card.addEventListener('click', (e) => {
       e.preventDefault();
       e.stopPropagation();
       
       // Esconder outros tooltips
-      contextCards.forEach(otherCard => {
-        if (otherCard !== card) {
-          const otherTooltip = otherCard.querySelector('.context-tooltip');
-          if (otherTooltip) {
-            otherTooltip.style.opacity = '0';
-            otherTooltip.style.visibility = 'hidden';
-            otherTooltip.style.transform = 'translateX(-50%) scale(0.8)';
+      cardsContexto.forEach(outroCard => {
+        if (outroCard !== card) {
+          const outraDica = outroCard.querySelector('.context-tooltip');
+          if (outraDica) {
+            outraDica.style.opacity = '0';
+            outraDica.style.visibility = 'hidden';
+            outraDica.style.transform = 'translateX(-50%) scale(0.8)';
           }
         }
       });
       
-      // Toggle este tooltip
-      tooltipVisible = !tooltipVisible;
-      if (tooltipVisible) {
-        tooltip.style.opacity = '1';
-        tooltip.style.visibility = 'visible';
-        tooltip.style.transform = 'translateX(-50%) scale(1)';
+      // Alternar esta tooltip
+      dicaVisivel = !dicaVisivel;
+      if (dicaVisivel) {
+        dicaFerramenta.style.opacity = '1';
+        dicaFerramenta.style.visibility = 'visible';
+        dicaFerramenta.style.transform = 'translateX(-50%) scale(1)';
       } else {
-        tooltip.style.opacity = '0';
-        tooltip.style.visibility = 'hidden';
-        tooltip.style.transform = 'translateX(-50%) scale(0.8)';
+        dicaFerramenta.style.opacity = '0';
+        dicaFerramenta.style.visibility = 'hidden';
+        dicaFerramenta.style.transform = 'translateX(-50%) scale(0.8)';
       }
     });
   });
@@ -440,56 +440,56 @@ function setupContextTooltips() {
   // Fechar tooltips ao tocar fora
   document.addEventListener('click', (e) => {
     if (!e.target.closest('.context-card')) {
-      contextCards.forEach(card => {
-        const tooltip = card.querySelector('.context-tooltip');
-        if (tooltip) {
-          tooltip.style.opacity = '0';
-          tooltip.style.visibility = 'hidden';
-          tooltip.style.transform = 'translateX(-50%) scale(0.8)';
+      cardsContexto.forEach(card => {
+        const dicaFerramenta = card.querySelector('.context-tooltip');
+        if (dicaFerramenta) {
+          dicaFerramenta.style.opacity = '0';
+          dicaFerramenta.style.visibility = 'hidden';
+          dicaFerramenta.style.transform = 'translateX(-50%) scale(0.8)';
         }
       });
     }
   });
 }
 
-// Initialize charts
-function initializeCharts() {
-  createMonthlyTrendChart();
-  createLocationChart();
+// Inicializar gráficos
+function inicializarGraficos() {
+  criarGraficoTendenciaMensal();
+  criarGraficoLocalizacao();
 }
 
-async function createMonthlyTrendChart() {
+async function criarGraficoTendenciaMensal() {
   try {
-    // Use the statistics API to get monthly data
-    if (!globalData || !globalData.months) {
+    // Usar a API de estatísticas para obter dados mensais
+    if (!dadosGlobais || !dadosGlobais.months) {
       console.error('Dados mensais não disponíveis');
       return;
     }
     
-    const monthNames = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 
+    const nomesMeses = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 
                         'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
     
-    // Process monthly data
-    const labels = globalData.months.map(m => {
-      const [year, month] = m.month.split('-');
-      return `${monthNames[parseInt(month) - 1]}/${year}`;
+    // Processar dados mensais
+    const rotulos = dadosGlobais.months.map(m => {
+      const [ano, mes] = m.month.split('-');
+      return `${nomesMeses[parseInt(mes) - 1]}/${ano}`;
     });
     
-    const data = globalData.months.map(m => m.count);
+    const dados = dadosGlobais.months.map(m => m.count);
     
-    // Find max month for insight
-    const maxMonth = globalData.months.reduce((max, m) => m.count > max.count ? m : max, globalData.months[0]);
-    const [year, month] = maxMonth.month.split('-');
-    const maxMonthName = monthNames[parseInt(month) - 1];
+    // Encontrar mês máximo para insights
+    const mesMaximo = dadosGlobais.months.reduce((max, m) => m.count > max.count ? m : max, dadosGlobais.months[0]);
+    const [ano, mes] = mesMaximo.month.split('-');
+    const nomeMesMaximo = nomesMeses[parseInt(mes) - 1];
     
-    const ctx = document.getElementById('monthlyTrendChart');
-    new Chart(ctx, {
+    const contexto = document.getElementById('monthlyTrendChart');
+    new Chart(contexto, {
       type: 'line',
       data: {
-        labels: labels,
+        labels: rotulos,
         datasets: [{
           label: 'Acidentes',
-          data: data,
+          data: dados,
           borderColor: '#FF0000',
           backgroundColor: 'rgba(255, 0, 0, 0.1)',
           fill: true,
@@ -519,8 +519,8 @@ async function createMonthlyTrendChart() {
             },
             cornerRadius: 6,
             callbacks: {
-              label: function(context) {
-                return `Acidentes: ${context.parsed.y}`;
+              label: function(contexto) {
+                return `Acidentes: ${contexto.parsed.y}`;
               }
             }
           }
@@ -554,35 +554,35 @@ async function createMonthlyTrendChart() {
         }
       }
     });
-  } catch (error) {
-    console.error('Erro ao criar gráfico mensal:', error);
+  } catch (erro) {
+    console.error('Erro ao criar gráfico mensal:', erro);
   }
 }
 
-async function createLocationChart() {
+async function criarGraficoLocalizacao() {
   try {
-    // Use the statistics API to get location data
-    if (!globalData || !globalData.locations) {
+    // Usar a API de estatísticas para obter dados de localização
+    if (!dadosGlobais || !dadosGlobais.locations) {
       console.error('Dados de localização não disponíveis');
       return;
     }
     
-    // Get top 6 locations
-    const topLocations = globalData.locations.slice(0, 6);
-    const labels = topLocations.map(l => l.local);
-    const data = topLocations.map(l => l.count);
+    // Obter top 6 localizações
+    const topLocalizacoes = dadosGlobais.locations.slice(0, 6);
+    const rotulos = topLocalizacoes.map(l => l.local);
+    const dados = topLocalizacoes.map(l => l.count);
     
-    // Find max location for insight
-    const maxLocation = topLocations[0];
+    // Encontrar localização máxima para insights
+    const localizacaoMaxima = topLocalizacoes[0];
     
-    const ctx = document.getElementById('locationChart');
-    new Chart(ctx, {
+    const contexto = document.getElementById('locationChart');
+    new Chart(contexto, {
       type: 'bar',
       data: {
-        labels: labels,
+        labels: rotulos,
         datasets: [{
           label: 'Acidentes',
-          data: data,
+          data: dados,
           backgroundColor: '#FF0000',
           borderRadius: 8,
           maxBarThickness: 80
@@ -608,8 +608,8 @@ async function createLocationChart() {
             },
             cornerRadius: 6,
             callbacks: {
-              label: function(context) {
-                return `Acidentes: ${context.parsed.y}`;
+              label: function(contexto) {
+                return `Acidentes: ${contexto.parsed.y}`;
               }
             }
           }
@@ -643,81 +643,81 @@ async function createLocationChart() {
         }
       }
     });
-  } catch (error) {
-    console.error('Erro ao criar gráfico de localização:', error);
+  } catch (erro) {
+    console.error('Erro ao criar gráfico de localização:', erro);
   }
 }
 
-// Load next actions from API
-async function loadNextActions() {
+// Carregar próximas ações da API
+async function carregarProximasAcoes() {
   try {
-    const response = await fetch('/api/next-actions');
-    if (!response.ok) throw new Error('Erro ao carregar próximas ações');
+    const resposta = await fetch('/api/next-actions');
+    if (!resposta.ok) throw new Error('Erro ao carregar próximas ações');
     
-    const actions = await response.json();
-    const actionsList = document.getElementById('actions-list');
+    const acoes = await resposta.json();
+    const listaAcoes = document.getElementById('actions-list');
     
-    if (!actionsList) return;
+    if (!listaAcoes) return;
     
-    // Clear loading state
-    actionsList.innerHTML = '';
+    // Limpar estado de carregamento
+    listaAcoes.innerHTML = '';
     
-    // Priority labels in Portuguese
-    const priorityLabels = {
+    // Rótulos de prioridade em português
+    const rotulosPrioridade = {
       'urgent': 'Urgente',
       'high': 'Alta',
       'medium': 'Média',
       'low': 'Baixa'
     };
     
-    // Status labels in Portuguese
-    const statusLabels = {
+    // Rótulos de status em português
+    const rotulosStatus = {
       'in-progress': 'Em andamento',
       'planned': 'Planejado',
       'completed': 'Concluído'
     };
     
-    // Generate action cards
-    actions.forEach((action, index) => {
-      const actionCard = document.createElement('div');
-      actionCard.className = `action-card ${action.priority}`;
-      actionCard.style.animationDelay = `${index * 0.15}s`;
+    // Gerar cards de ação
+    acoes.forEach((acao, indice) => {
+      const cardAcao = document.createElement('div');
+      cardAcao.className = `action-card ${acao.priority}`;
+      cardAcao.style.animationDelay = `${indice * 0.15}s`;
       
-      actionCard.innerHTML = `
+      cardAcao.innerHTML = `
         <div class="action-header">
           <div>
-            <span class="action-badge ${action.priority}">${priorityLabels[action.priority]}</span>
-            <span class="action-location">${action.location}</span>
+            <span class="action-badge ${acao.priority}">${rotulosPrioridade[acao.priority]}</span>
+            <span class="action-location">${acao.location}</span>
           </div>
-          <span class="action-status ${action.status}">${statusLabels[action.status]}</span>
+          <span class="action-status ${acao.status}">${rotulosStatus[acao.status]}</span>
         </div>
-        <h3>${action.title}</h3>
-        <p class="action-description">${action.description}</p>
+        <h3>${acao.title}</h3>
+        <p class="action-description">${acao.description}</p>
         <div class="action-meta">
           <span class="meta-item">
             <svg width="16" height="16" viewBox="0 0 20 20" fill="none">
               <circle cx="10" cy="7" r="4" stroke="currentColor" stroke-width="2" />
               <path d="M5 21V19C5 16.7909 6.79086 15 9 15H15C17.2091 15 19 16.7909 19 19V21" stroke="currentColor" stroke-width="2" />
             </svg>
-            ${action.responsible}
+            ${acao.responsible}
           </span>
           <span class="meta-item">
             <svg width="16" height="16" viewBox="0 0 20 20" fill="none">
               <rect x="3" y="4" width="14" height="14" rx="2" stroke="currentColor" stroke-width="2" />
             </svg>
-            Prazo: ${action.deadline}
+            Prazo: ${acao.deadline}
           </span>
         </div>
       `;
       
-      actionsList.appendChild(actionCard);
+      listaAcoes.appendChild(cardAcao);
     });
     
-  } catch (error) {
-    console.error('Erro ao carregar próximas ações:', error);
-    const actionsList = document.getElementById('actions-list');
-    if (actionsList) {
-      actionsList.innerHTML = `
+  } catch (erro) {
+    console.error('Erro ao carregar próximas ações:', erro);
+    const listaAcoes = document.getElementById('actions-list');
+    if (listaAcoes) {
+      listaAcoes.innerHTML = `
         <div class="error-state">
           <p>⚠️ Não foi possível carregar as ações prioritárias</p>
         </div>
