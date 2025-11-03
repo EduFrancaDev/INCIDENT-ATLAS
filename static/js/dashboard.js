@@ -1,225 +1,225 @@
-// State Management
-const state = {
-  filters: {
-    gender: { male: true, female: true },
-    countries: [],
-    dateRange: {
-      start: null,
-      end: null
+// Gerenciamento de Estado
+const estado = {
+  filtros: {
+    genero: { masculino: true, feminino: true },
+    paises: [],
+    intervaloData: {
+      inicio: null,
+      fim: null
     }
   },
-  charts: {},
-  availableCountries: [],
-  incidents: {
-    data: [],
-    page: 1,
-    perPage: 20,
-    hasMore: true,
-    searchQuery: '',
-    isLoading: false
+  graficos: {},
+  paisesDisponiveis: [],
+  incidentes: {
+    dados: [],
+    pagina: 1,
+    porPagina: 20,
+    temMais: true,
+    consultaBusca: '',
+    estaCarregando: false
   }
 };
 
-// Initialize Dashboard
+// Inicializar Dashboard
 document.addEventListener('DOMContentLoaded', async () => {
-  showLoading();
-  await initializeData();
-  initializeFilters();
-  initializeCharts();
-  initializeModals();
-  setupIncidentsInfiniteScroll();
-  setupIncidentsSearch();
-  await updateDashboard();
-  hideLoading();
+  mostrarCarregamento();
+  await inicializarDados();
+  inicializarFiltros();
+  inicializarGraficos();
+  inicializarModais();
+  configurarRolagemInfinitaIncidentes();
+  configurarBuscaIncidentes();
+  await atualizarDashboard();
+  ocultarCarregamento();
 });
 
-// Loading Functions
-function showLoading() {
+// Funções de Carregamento
+function mostrarCarregamento() {
   console.log('Carregando dados...');
 }
 
-function hideLoading() {
+function ocultarCarregamento() {
   console.log('Dados carregados!');
 }
 
-// Initialize Data
-async function initializeData() {
+// Inicializar Dados
+async function inicializarDados() {
   try {
     // Buscar países disponíveis e range de datas do endpoint de estatísticas
-    const response = await fetch('/api/statistics');
-    if (!response.ok) {
+    const resposta = await fetch('/api/statistics');
+    if (!resposta.ok) {
       throw new Error('Erro ao carregar estatísticas iniciais');
     }
     
-    const stats = await response.json();
+    const estatisticas = await resposta.json();
     
     // Extrair países únicos
-    state.availableCountries = stats.countries.map(c => c.country).sort();
-    state.filters.countries = [...state.availableCountries];
+    estado.paisesDisponiveis = estatisticas.countries.map(c => c.country).sort();
+    estado.filtros.paises = [...estado.paisesDisponiveis];
     
     // Definir range de datas baseado nos dados de meses
-    if (stats.months && stats.months.length > 0) {
-      const months = stats.months.map(m => m.month);
-      state.filters.dateRange.start = new Date(months[0] + '-01');
+    if (estatisticas.months && estatisticas.months.length > 0) {
+      const meses = estatisticas.months.map(m => m.month);
+      estado.filtros.intervaloData.inicio = new Date(meses[0] + '-01');
       
       // Pegar a data máxima real do banco ao invés de calcular o último dia do mês
-      const lastMonth = months[months.length - 1];
-      state.filters.dateRange.end = new Date(lastMonth + '-31'); // Usar dia 31 para garantir incluir todo o mês
+      const ultimoMes = meses[meses.length - 1];
+      estado.filtros.intervaloData.fim = new Date(ultimoMes + '-31'); // Usar dia 31 para garantir incluir todo o mês
       
       console.log('📅 Range de datas configurado:', {
-        start: state.filters.dateRange.start,
-        end: state.filters.dateRange.end,
-        startISO: state.filters.dateRange.start.toISOString().split('T')[0],
-        endISO: state.filters.dateRange.end.toISOString().split('T')[0]
+        inicio: estado.filtros.intervaloData.inicio,
+        fim: estado.filtros.intervaloData.fim,
+        inicioISO: estado.filtros.intervaloData.inicio.toISOString().split('T')[0],
+        fimISO: estado.filtros.intervaloData.fim.toISOString().split('T')[0]
       });
     } else {
       // Fallback
-      state.filters.dateRange.start = new Date('2016-01-01');
-      state.filters.dateRange.end = new Date();
+      estado.filtros.intervaloData.inicio = new Date('2016-01-01');
+      estado.filtros.intervaloData.fim = new Date();
     }
     
     console.log('Dados iniciais carregados');
-  } catch (error) {
-    console.error('Erro ao carregar dados iniciais:', error);
+  } catch (erro) {
+    console.error('Erro ao carregar dados iniciais:', erro);
     alert('Erro ao carregar dados. Por favor, recarregue a página.');
   }
 }
 
-// Build Filter Query String
-function buildFilterQueryString() {
-  const params = new URLSearchParams();
+// Construir String de Consulta de Filtros
+function construirStringConsultaFiltros() {
+  const parametros = new URLSearchParams();
   
   // Adicionar filtros de gênero
-  if (state.filters.gender.male) params.append('gender', 'Homem');
-  if (state.filters.gender.female) params.append('gender', 'Mulher');
+  if (estado.filtros.genero.masculino) parametros.append('gender', 'Homem');
+  if (estado.filtros.genero.feminino) parametros.append('gender', 'Mulher');
   
   // Adicionar filtros de países
-  state.filters.countries.forEach(country => {
-    params.append('country', country);
+  estado.filtros.paises.forEach(pais => {
+    parametros.append('country', pais);
   });
   
   // Adicionar filtros de data
-  if (state.filters.dateRange.start) {
-    params.append('startDate', state.filters.dateRange.start.toISOString().split('T')[0]);
+  if (estado.filtros.intervaloData.inicio) {
+    parametros.append('startDate', estado.filtros.intervaloData.inicio.toISOString().split('T')[0]);
   }
-  if (state.filters.dateRange.end) {
-    params.append('endDate', state.filters.dateRange.end.toISOString().split('T')[0]);
+  if (estado.filtros.intervaloData.fim) {
+    parametros.append('endDate', estado.filtros.intervaloData.fim.toISOString().split('T')[0]);
   }
   
-  console.log('🔍 Query string gerada:', params.toString());
+  console.log('🔍 Query string gerada:', parametros.toString());
   
-  return params.toString();
+  return parametros.toString();
 }
 
 // Filter Functions
-function initializeFilters() {
-  // Gender Filters
+function inicializarFiltros() {
+  // Filtros de Gênero
   document.getElementById('filterWomen').addEventListener('click', () => {
-    toggleGenderFilter('female');
+    alternarFiltroGenero('feminino');
   });
 
   document.getElementById('filterMen').addEventListener('click', () => {
-    toggleGenderFilter('male');
+    alternarFiltroGenero('masculino');
   });
 
-  // Country Filter
+  // Filtro de Países
   document.getElementById('filterCountries').addEventListener('click', () => {
-    openCountriesModal();
+    abrirModalPaises();
   });
 
-  // Period Filter
+  // Filtro de Período
   document.getElementById('filterPeriod').addEventListener('click', () => {
-    openPeriodModal();
+    abrirModalPeriodo();
   });
 
-  // Chart Filters
+  // Filtros de Gráficos
   document.getElementById('monthRangeFilter').addEventListener('change', (e) => {
-    updateMonthChart(e.target.value);
+    atualizarGraficoMensal(e.target.value);
   });
 
   document.getElementById('countryFilter').addEventListener('change', (e) => {
-    updateLocationChart(e.target.value);
+    atualizarGraficoLocalizacao(e.target.value);
   });
 }
 
-function toggleGenderFilter(gender) {
-  state.filters.gender[gender] = !state.filters.gender[gender];
+function alternarFiltroGenero(genero) {
+  estado.filtros.genero[genero] = !estado.filtros.genero[genero];
   
-  const card = gender === 'female' 
+  const cartao = genero === 'feminino' 
     ? document.getElementById('filterWomen')
     : document.getElementById('filterMen');
   
-  card.setAttribute('data-active', state.filters.gender[gender]);
-  updateDashboard();
+  cartao.setAttribute('data-active', estado.filtros.genero[genero]);
+  atualizarDashboard();
 }
 
-// Update Dashboard - Agora faz requisições ao backend
-async function updateDashboard() {
-  const queryString = buildFilterQueryString();
+// Atualizar Dashboard - Agora faz requisições ao backend
+async function atualizarDashboard() {
+  const stringConsulta = construirStringConsultaFiltros();
   
   try {
     // Atualizar cards de filtro
-    await updateFilterCards(queryString);
+    await atualizarCardsFiltro(stringConsulta);
     
     // Atualizar todos os gráficos
-    await updateAllCharts(queryString);
+    await atualizarTodosGraficos(stringConsulta);
     
     // Atualizar mapa de calor
-    await updateBodyMap(queryString);
+    await atualizarMapaCorpo(stringConsulta);
     
     // Atualizar lista de incidentes
-    await updateIncidentsList(queryString);
-  } catch (error) {
-    console.error('Erro ao atualizar dashboard:', error);
+    await atualizarListaIncidentes(stringConsulta);
+  } catch (erro) {
+    console.error('Erro ao atualizar dashboard:', erro);
   }
 }
 
-async function updateFilterCards(queryString) {
+async function atualizarCardsFiltro(stringConsulta) {
   try {
-    const response = await fetch(`/api/dashboard/stats?${queryString}`);
-    if (!response.ok) throw new Error('Erro ao buscar estatísticas');
+    const resposta = await fetch(`/api/dashboard/stats?${stringConsulta}`);
+    if (!resposta.ok) throw new Error('Erro ao buscar estatísticas');
     
-    const data = await response.json();
+    const dados = await resposta.json();
     
     // Debug logging
-    console.log('📊 Dados recebidos do backend:', data);
-    console.log(`Total: ${data.total}, Mulheres: ${data.women.count}, Homens: ${data.men.count}`);
+    console.log('📊 Dados recebidos do backend:', dados);
+    console.log(`Total: ${dados.total}, Mulheres: ${dados.women.count}, Homens: ${dados.men.count}`);
     
-    document.getElementById('womenCount').textContent = data.women.count;
-    document.getElementById('womenPercent').textContent = `${data.women.percent}%`;
+    document.getElementById('womenCount').textContent = dados.women.count;
+    document.getElementById('womenPercent').textContent = `${dados.women.percent}%`;
     
-    document.getElementById('menCount').textContent = data.men.count;
-    document.getElementById('menPercent').textContent = `${data.men.percent}%`;
+    document.getElementById('menCount').textContent = dados.men.count;
+    document.getElementById('menPercent').textContent = `${dados.men.percent}%`;
     
-    document.getElementById('countriesCount').textContent = data.countriesCount;
-    document.getElementById('countriesNames').textContent = state.filters.countries.join(', ');
+    document.getElementById('countriesCount').textContent = dados.countriesCount;
+    document.getElementById('countriesNames').textContent = estado.filtros.paises.join(', ');
     
     // Calcular dias do período
-    if (data.dateRange.start && data.dateRange.end) {
-      const start = new Date(data.dateRange.start);
-      const end = new Date(data.dateRange.end);
-      const daysDiff = Math.ceil((end - start) / (1000 * 60 * 60 * 24));
-      document.getElementById('periodDays').textContent = `${daysDiff} dias`;
+    if (dados.dateRange.start && dados.dateRange.end) {
+      const inicio = new Date(dados.dateRange.start);
+      const fim = new Date(dados.dateRange.end);
+      const diferencaDias = Math.ceil((fim - inicio) / (1000 * 60 * 60 * 24));
+      document.getElementById('periodDays').textContent = `${diferencaDias} dias`;
       
-      const startMonth = start.toLocaleDateString('pt-BR', { month: 'short', year: 'numeric' });
-      const endMonth = end.toLocaleDateString('pt-BR', { month: 'short', year: 'numeric' });
-      document.getElementById('periodRange').textContent = `${startMonth} - ${endMonth}`;
+      const mesInicio = inicio.toLocaleDateString('pt-BR', { month: 'short', year: 'numeric' });
+      const mesFim = fim.toLocaleDateString('pt-BR', { month: 'short', year: 'numeric' });
+      document.getElementById('periodRange').textContent = `${mesInicio} - ${mesFim}`;
     }
-  } catch (error) {
-    console.error('Erro ao atualizar cards de filtro:', error);
+  } catch (erro) {
+    console.error('Erro ao atualizar cards de filtro:', erro);
   }
 }
 
-// Chart Initialization
-function initializeCharts() {
-  createAccidentsPerMonthChart();
-  createAccidentPotentialChart();
-  createAccidentsByLocationChart();
+// Inicialização de Gráficos
+function inicializarGraficos() {
+  criarGraficoAcidentesPorMes();
+  criarGraficoPotencialAcidentes();
+  criarGraficoAcidentesPorLocal();
 }
 
-function createAccidentsPerMonthChart() {
-  const ctx = document.getElementById('accidentsPerMonthChart');
-  state.charts.monthChart = new Chart(ctx, {
+function criarGraficoAcidentesPorMes() {
+  const contexto = document.getElementById('accidentsPerMonthChart');
+  estado.graficos.graficoMensal = new Chart(contexto, {
     type: 'line',
     data: {
       labels: [],
@@ -284,10 +284,10 @@ function createAccidentsPerMonthChart() {
   });
 }
 
-function createAccidentPotentialChart() {
-  const ctx = document.getElementById('accidentPotentialChart');
+function criarGraficoPotencialAcidentes() {
+  const contexto = document.getElementById('accidentPotentialChart');
   
-  state.charts.potentialChart = new Chart(ctx, {
+  estado.graficos.graficoPotencial = new Chart(contexto, {
     type: 'doughnut',
     data: {
       labels: ['Mineração', 'Metalurgia', 'Outros'],
@@ -332,10 +332,10 @@ function createAccidentPotentialChart() {
   });
 }
 
-function createAccidentsByLocationChart() {
-  const ctx = document.getElementById('accidentsByLocationChart');
+function criarGraficoAcidentesPorLocal() {
+  const contexto = document.getElementById('accidentsByLocationChart');
   
-  state.charts.locationChart = new Chart(ctx, {
+  estado.graficos.graficoLocalizacao = new Chart(contexto, {
     type: 'bar',
     data: {
       labels: [],
@@ -378,89 +378,89 @@ function createAccidentsByLocationChart() {
   });
 }
 
-async function updateAllCharts(queryString) {
-  await updateMonthChart('all', queryString);
-  await updatePotentialChart(queryString);
-  await updateLocationChart('all', queryString);
-  updateCountryFilterDropdown();
+async function atualizarTodosGraficos(stringConsulta) {
+  await atualizarGraficoMensal('all', stringConsulta);
+  await atualizarGraficoPotencial(stringConsulta);
+  await atualizarGraficoLocalizacao('all', stringConsulta);
+  atualizarDropdownFiltroPais();
 }
 
-function updateCountryFilterDropdown() {
+function atualizarDropdownFiltroPais() {
   const dropdown = document.getElementById('countryFilter');
-  const optionsHtml = '<option value="all">Todos os países</option>' +
-    state.availableCountries.map(country => 
-      `<option value="${country}">${country}</option>`
+  const htmlOpcoes = '<option value="all">Todos os países</option>' +
+    estado.paisesDisponiveis.map(pais => 
+      `<option value="${pais}">${pais}</option>`
     ).join('');
-  dropdown.innerHTML = optionsHtml;
+  dropdown.innerHTML = htmlOpcoes;
 }
 
-async function updateMonthChart(range, queryString = null) {
-  if (!queryString) queryString = buildFilterQueryString();
+async function atualizarGraficoMensal(intervalo, stringConsulta = null) {
+  if (!stringConsulta) stringConsulta = construirStringConsultaFiltros();
   
   try {
-    const response = await fetch(`/api/charts/monthly?${queryString}&range=${range}`);
-    if (!response.ok) throw new Error('Erro ao buscar dados mensais');
+    const resposta = await fetch(`/api/charts/monthly?${stringConsulta}&range=${intervalo}`);
+    if (!resposta.ok) throw new Error('Erro ao buscar dados mensais');
     
-    const data = await response.json();
+    const dados = await resposta.json();
     
-    state.charts.monthChart.data.labels = data.labels;
-    state.charts.monthChart.data.datasets[0].data = data.data;
-    state.charts.monthChart.update();
-  } catch (error) {
-    console.error('Erro ao atualizar gráfico mensal:', error);
+    estado.graficos.graficoMensal.data.labels = dados.labels;
+    estado.graficos.graficoMensal.data.datasets[0].data = dados.data;
+    estado.graficos.graficoMensal.update();
+  } catch (erro) {
+    console.error('Erro ao atualizar gráfico mensal:', erro);
   }
 }
 
-async function updatePotentialChart(queryString = null) {
-  if (!queryString) queryString = buildFilterQueryString();
+async function atualizarGraficoPotencial(stringConsulta = null) {
+  if (!stringConsulta) stringConsulta = construirStringConsultaFiltros();
   
   try {
-    const response = await fetch(`/api/charts/sectors?${queryString}`);
-    if (!response.ok) throw new Error('Erro ao buscar dados de setores');
+    const resposta = await fetch(`/api/charts/sectors?${stringConsulta}`);
+    if (!resposta.ok) throw new Error('Erro ao buscar dados de setores');
     
-    const data = await response.json();
+    const dados = await resposta.json();
     
-    state.charts.potentialChart.data.labels = data.labels;
-    state.charts.potentialChart.data.datasets[0].data = data.data;
-    state.charts.potentialChart.update();
+    estado.graficos.graficoPotencial.data.labels = dados.labels;
+    estado.graficos.graficoPotencial.data.datasets[0].data = dados.data;
+    estado.graficos.graficoPotencial.update();
     
-    // Update legend
-    const legendHtml = data.labels.map((label, index) => {
-      const colors = ['#FF0000', '#4F46E5', '#10B981'];
+    // Atualizar legenda
+    const htmlLegenda = dados.labels.map((rotulo, indice) => {
+      const cores = ['#FF0000', '#4F46E5', '#10B981'];
       return `
         <div class="legend-item">
-          <span class="legend-color" style="background: ${colors[index]};"></span>
-          <span>${label} (${data.data[index]})</span>
+          <span class="legend-color" style="background: ${cores[indice]};"></span>
+          <span>${rotulo} (${dados.data[indice]})</span>
         </div>
       `;
     }).join('');
     
-    document.getElementById('potentialLegend').innerHTML = legendHtml;
-  } catch (error) {
-    console.error('Erro ao atualizar gráfico de setores:', error);
+    document.getElementById('potentialLegend').innerHTML = htmlLegenda;
+  } catch (erro) {
+    console.error('Erro ao atualizar gráfico de setores:', erro);
   }
 }
 
-async function updateLocationChart(filterCountry, queryString = null) {
-  if (!queryString) queryString = buildFilterQueryString();
+async function atualizarGraficoLocalizacao(filtroPais, stringConsulta = null) {
+  if (!stringConsulta) stringConsulta = construirStringConsultaFiltros();
   
   try {
-    const response = await fetch(`/api/charts/locations?${queryString}&filterCountry=${filterCountry}`);
-    if (!response.ok) throw new Error('Erro ao buscar dados de localização');
+    const resposta = await fetch(`/api/charts/locations?${stringConsulta}&filterCountry=${filtroPais}`);
+    if (!resposta.ok) throw new Error('Erro ao buscar dados de localização');
     
-    const data = await response.json();
+    const dados = await resposta.json();
     
-    state.charts.locationChart.data.labels = data.labels;
-    state.charts.locationChart.data.datasets[0].data = data.data;
-    state.charts.locationChart.update();
-  } catch (error) {
-    console.error('Erro ao atualizar gráfico de localização:', error);
+    estado.graficos.graficoLocalizacao.data.labels = dados.labels;
+    estado.graficos.graficoLocalizacao.data.datasets[0].data = dados.data;
+    estado.graficos.graficoLocalizacao.update();
+  } catch (erro) {
+    console.error('Erro ao atualizar gráfico de localização:', erro);
   }
 }
 
-// Body Map
-async function updateBodyMap(queryString = null) {
-  if (!queryString) queryString = buildFilterQueryString();
+// Mapa do Corpo
+async function atualizarMapaCorpo(stringConsulta = null) {
+  if (!stringConsulta) stringConsulta = construirStringConsultaFiltros();
   
   try {
     const response = await fetch(`/api/heatmap/bodyparts?${queryString}`);
@@ -543,180 +543,180 @@ async function updateBodyMap(queryString = null) {
 }
 
 // Configurar tooltips para o mapa de calor
-function setupBodyMapTooltips() {
-  const tooltip = document.getElementById('body-tooltip');
-  let selectedPart = null;
+function configurarTooltipsMapaCorpo() {
+  const dicaFerramenta = document.getElementById('body-tooltip');
+  let parteSelecionada = null;
   
-  document.querySelectorAll('.body-part').forEach(part => {
-    const count = part.getAttribute('data-count') || '0';
-    const name = part.getAttribute('data-name') || 'Desconhecido';
+  document.querySelectorAll('.body-part').forEach(parte => {
+    const contagem = parte.getAttribute('data-count') || '0';
+    const nome = parte.getAttribute('data-name') || 'Desconhecido';
     
     // Hover - mostrar tooltip
-    part.addEventListener('mouseenter', (e) => {
-      const rect = part.getBoundingClientRect();
-      const svgRect = document.getElementById('bodyHeatmap').getBoundingClientRect();
+    parte.addEventListener('mouseenter', (e) => {
+      const retangulo = parte.getBoundingClientRect();
+      const retanguloSvg = document.getElementById('bodyHeatmap').getBoundingClientRect();
       
-      tooltip.textContent = `${name}: ${count} acidentes`;
-      tooltip.classList.add('show');
+      dicaFerramenta.textContent = `${nome}: ${contagem} acidentes`;
+      dicaFerramenta.classList.add('show');
       
       // Posicionar tooltip
-      const tooltipX = rect.left + rect.width / 2 - svgRect.left;
-      const tooltipY = rect.top - svgRect.top - 10;
-      tooltip.style.left = tooltipX + 'px';
-      tooltip.style.top = tooltipY + 'px';
-      tooltip.style.transform = 'translate(-50%, -100%)';
+      const dicaX = retangulo.left + retangulo.width / 2 - retanguloSvg.left;
+      const dicaY = retangulo.top - retanguloSvg.top - 10;
+      dicaFerramenta.style.left = dicaX + 'px';
+      dicaFerramenta.style.top = dicaY + 'px';
+      dicaFerramenta.style.transform = 'translate(-50%, -100%)';
     });
 
-    part.addEventListener('mouseleave', () => {
-      tooltip.classList.remove('show');
+    parte.addEventListener('mouseleave', () => {
+      dicaFerramenta.classList.remove('show');
     });
 
     // Click - selecionar/deselecionar
-    part.addEventListener('click', () => {
+    parte.addEventListener('click', () => {
       // Remover seleção anterior
-      if (selectedPart && selectedPart !== part) {
-        selectedPart.classList.remove('selected');
+      if (parteSelecionada && parteSelecionada !== parte) {
+        parteSelecionada.classList.remove('selected');
       }
 
       // Alternar seleção atual
-      if (selectedPart === part) {
-        part.classList.remove('selected');
-        selectedPart = null;
+      if (parteSelecionada === parte) {
+        parte.classList.remove('selected');
+        parteSelecionada = null;
       } else {
-        part.classList.add('selected');
-        selectedPart = part;
+        parte.classList.add('selected');
+        parteSelecionada = parte;
       }
     });
   });
 }
 
-// Incidents List
-async function updateIncidentsList(queryString = null, resetList = true) {
-  if (!queryString) queryString = buildFilterQueryString();
-  if (state.incidents.isLoading) return;
+// Lista de Incidentes
+async function atualizarListaIncidentes(stringConsulta = null, resetarLista = true) {
+  if (!stringConsulta) stringConsulta = construirStringConsultaFiltros();
+  if (estado.incidentes.estaCarregando) return;
   
-  // Reset state if needed
-  if (resetList) {
-    state.incidents.page = 1;
-    state.incidents.data = [];
-    state.incidents.hasMore = true;
+  // Resetar estado se necessário
+  if (resetarLista) {
+    estado.incidentes.pagina = 1;
+    estado.incidentes.dados = [];
+    estado.incidentes.temMais = true;
   }
   
   try {
-    state.incidents.isLoading = true;
+    estado.incidentes.estaCarregando = true;
     document.getElementById('incidentsLoading').style.display = 'block';
     
     // Adicionar query de busca
-    let searchParam = '';
-    if (state.incidents.searchQuery) {
-      searchParam = `&search=${encodeURIComponent(state.incidents.searchQuery)}`;
+    let parametroBusca = '';
+    if (estado.incidentes.consultaBusca) {
+      parametroBusca = `&search=${encodeURIComponent(estado.incidentes.consultaBusca)}`;
     }
     
-    const response = await fetch(`/api/accidents/filtered?${queryString}&page=${state.incidents.page}&perPage=${state.incidents.perPage}${searchParam}`);
-    if (!response.ok) throw new Error('Erro ao buscar lista de incidentes');
+    const resposta = await fetch(`/api/accidents/filtered?${stringConsulta}&page=${estado.incidentes.pagina}&perPage=${estado.incidentes.porPagina}${parametroBusca}`);
+    if (!resposta.ok) throw new Error('Erro ao buscar lista de incidentes');
     
-    const incidents = await response.json();
+    const incidentes = await resposta.json();
     
-    // Adicionar novos incidentes ao state
-    state.incidents.data = resetList ? incidents : [...state.incidents.data, ...incidents];
-    state.incidents.hasMore = incidents.length === state.incidents.perPage;
+    // Adicionar novos incidentes ao estado
+    estado.incidentes.dados = resetarLista ? incidentes : [...estado.incidentes.dados, ...incidentes];
+    estado.incidentes.temMais = incidentes.length === estado.incidentes.porPagina;
     
-    const listContainer = document.getElementById('incidentsList');
-    const listHtml = state.incidents.data.map(incident => `
-      <div class="incident-item" data-id="${incident.id}">
+    const containerLista = document.getElementById('incidentsList');
+    const htmlLista = estado.incidentes.dados.map(incidente => `
+      <div class="incident-item" data-id="${incidente.id}">
         <div class="incident-item-header">
-          <span class="incident-id">Acidente #${String(incident.id).padStart(3, '0')} Nível ${incident.accidentLevel}</span>
-          <span class="incident-date">${new Date(incident.date).toLocaleDateString('pt-BR')}</span>
+          <span class="incident-id">Acidente #${String(incidente.id).padStart(3, '0')} Nível ${incidente.accidentLevel}</span>
+          <span class="incident-date">${new Date(incidente.date).toLocaleDateString('pt-BR')}</span>
         </div>
-        <div class="incident-location">${incident.local} - ${incident.country}</div>
+        <div class="incident-location">${incidente.local} - ${incidente.country}</div>
       </div>
     `).join('');
 
-    listContainer.innerHTML = listHtml;
+    containerLista.innerHTML = htmlLista;
 
-    // Add click listeners
+    // Adicionar listeners de clique
     document.querySelectorAll('.incident-item').forEach(item => {
       item.addEventListener('click', () => {
         const id = parseInt(item.getAttribute('data-id'));
-        openIncidentModal(id, state.incidents.data);
+        abrirModalIncidente(id, estado.incidentes.dados);
       });
     });
     
-    state.incidents.isLoading = false;
+    estado.incidentes.estaCarregando = false;
     document.getElementById('incidentsLoading').style.display = 'none';
-  } catch (error) {
-    console.error('Erro ao atualizar lista de incidentes:', error);
-    state.incidents.isLoading = false;
+  } catch (erro) {
+    console.error('Erro ao atualizar lista de incidentes:', erro);
+    estado.incidentes.estaCarregando = false;
     document.getElementById('incidentsLoading').style.display = 'none';
   }
 }
 
 // Scroll infinito para incidentes
-function setupIncidentsInfiniteScroll() {
-  const listContainer = document.getElementById('incidentsList');
+function configurarRolagemInfinitaIncidentes() {
+  const containerLista = document.getElementById('incidentsList');
   
-  listContainer.addEventListener('scroll', () => {
-    if (state.incidents.isLoading || !state.incidents.hasMore) return;
+  containerLista.addEventListener('scroll', () => {
+    if (estado.incidentes.estaCarregando || !estado.incidentes.temMais) return;
     
-    const scrollHeight = listContainer.scrollHeight;
-    const scrollTop = listContainer.scrollTop;
-    const clientHeight = listContainer.clientHeight;
+    const alturaRolagem = containerLista.scrollHeight;
+    const topoRolagem = containerLista.scrollTop;
+    const alturaCliente = containerLista.clientHeight;
     
     // Carregar mais quando chegar a 80% do scroll
-    if (scrollTop + clientHeight >= scrollHeight * 0.8) {
-      state.incidents.page++;
-      updateIncidentsList(null, false);
+    if (topoRolagem + alturaCliente >= alturaRolagem * 0.8) {
+      estado.incidentes.pagina++;
+      atualizarListaIncidentes(null, false);
     }
   });
 }
 
 // Busca de incidentes
-function setupIncidentsSearch() {
-  const searchInput = document.getElementById('incidentsSearch');
-  let searchTimeout;
+function configurarBuscaIncidentes() {
+  const campoBusca = document.getElementById('incidentsSearch');
+  let temporizadorBusca;
   
-  searchInput.addEventListener('input', (e) => {
-    clearTimeout(searchTimeout);
-    searchTimeout = setTimeout(() => {
-      state.incidents.searchQuery = e.target.value.trim();
-      updateIncidentsList(null, true);
+  campoBusca.addEventListener('input', (e) => {
+    clearTimeout(temporizadorBusca);
+    temporizadorBusca = setTimeout(() => {
+      estado.incidentes.consultaBusca = e.target.value.trim();
+      atualizarListaIncidentes(null, true);
     }, 500); // Debounce de 500ms
   });
 }
 
-// Modal Functions
-function initializeModals() {
-  // Incident Modal
+// Funções de Modais
+function inicializarModais() {
+  // Modal de Incidente
   document.getElementById('modalClose').addEventListener('click', () => {
-    closeModal('incidentModal');
+    fecharModal('incidentModal');
   });
 
-  // Countries Modal
+  // Modal de Países
   document.getElementById('countriesModalClose').addEventListener('click', () => {
-    closeModal('countriesModal');
+    fecharModal('countriesModal');
   });
 
   document.getElementById('countriesSelectAll').addEventListener('click', () => {
-    state.filters.countries = [...state.availableCountries];
-    updateCountriesCheckboxes();
+    estado.filtros.paises = [...estado.paisesDisponiveis];
+    atualizarCheckboxesPaises();
   });
 
   document.getElementById('countriesClearAll').addEventListener('click', () => {
-    state.filters.countries = [];
-    updateCountriesCheckboxes();
+    estado.filtros.paises = [];
+    atualizarCheckboxesPaises();
   });
 
-  // Period Modal
+  // Modal de Período
   document.getElementById('periodModalClose').addEventListener('click', () => {
-    closeModal('periodModal');
+    fecharModal('periodModal');
   });
 
   document.getElementById('periodCancel').addEventListener('click', () => {
-    closeModal('periodModal');
+    fecharModal('periodModal');
   });
 
   document.getElementById('periodApply').addEventListener('click', () => {
-    applyPeriodFilter();
+    aplicarFiltroPeriodo();
   });
 
   // Close modals on background click
@@ -727,89 +727,89 @@ function initializeModals() {
   });
 }
 
-function openIncidentModal(id, incidents) {
-  const incident = incidents.find(i => i.id === id);
-  if (!incident) return;
+function abrirModalIncidente(id, incidentes) {
+  const incidente = incidentes.find(i => i.id === id);
+  if (!incidente) return;
 
-  document.getElementById('modalId').textContent = `#${String(incident.id).padStart(3, '0')}`;
-  document.getElementById('modalDate').textContent = new Date(incident.date).toLocaleDateString('pt-BR');
-  document.getElementById('modalLocation').textContent = incident.local;
-  document.getElementById('modalCountry').textContent = incident.country;
-  document.getElementById('modalSector').textContent = incident.sector;
-  document.getElementById('modalLevel').textContent = incident.accidentLevel;
-  document.getElementById('modalRisk').textContent = incident.criticalRisk;
-  document.getElementById('modalDescription').textContent = incident.description;
+  document.getElementById('modalId').textContent = `#${String(incidente.id).padStart(3, '0')}`;
+  document.getElementById('modalDate').textContent = new Date(incidente.date).toLocaleDateString('pt-BR');
+  document.getElementById('modalLocation').textContent = incidente.local;
+  document.getElementById('modalCountry').textContent = incidente.country;
+  document.getElementById('modalSector').textContent = incidente.sector;
+  document.getElementById('modalLevel').textContent = incidente.accidentLevel;
+  document.getElementById('modalRisk').textContent = incidente.criticalRisk;
+  document.getElementById('modalDescription').textContent = incidente.description;
 
-  openModal('incidentModal');
+  abrirModal('incidentModal');
 }
 
-function openCountriesModal() {
-  const countries = state.availableCountries;
-  const listHtml = countries.map(country => `
+function abrirModalPaises() {
+  const paises = estado.paisesDisponiveis;
+  const htmlLista = paises.map(pais => `
     <div class="country-checkbox-item">
-      <input type="checkbox" id="country-${country}" value="${country}" 
-        ${state.filters.countries.includes(country) ? 'checked' : ''}>
-      <label for="country-${country}">${country}</label>
+      <input type="checkbox" id="country-${pais}" value="${pais}" 
+        ${estado.filtros.paises.includes(pais) ? 'checked' : ''}>
+      <label for="country-${pais}">${pais}</label>
     </div>
   `).join('');
 
-  document.getElementById('countriesFilterList').innerHTML = listHtml;
+  document.getElementById('countriesFilterList').innerHTML = htmlLista;
 
-  // Add change listeners
-  countries.forEach(country => {
-    document.getElementById(`country-${country}`).addEventListener('change', (e) => {
+  // Adicionar listeners de mudança
+  paises.forEach(pais => {
+    document.getElementById(`country-${pais}`).addEventListener('change', (e) => {
       if (e.target.checked) {
-        if (!state.filters.countries.includes(country)) {
-          state.filters.countries.push(country);
+        if (!estado.filtros.paises.includes(pais)) {
+          estado.filtros.paises.push(pais);
         }
       } else {
-        state.filters.countries = state.filters.countries.filter(c => c !== country);
+        estado.filtros.paises = estado.filtros.paises.filter(c => c !== pais);
       }
-      updateDashboard();
+      atualizarDashboard();
     });
   });
 
-  openModal('countriesModal');
+  abrirModal('countriesModal');
 }
 
-function updateCountriesCheckboxes() {
-  state.availableCountries.forEach(country => {
-    const checkbox = document.getElementById(`country-${country}`);
-    if (checkbox) {
-      checkbox.checked = state.filters.countries.includes(country);
+function atualizarCheckboxesPaises() {
+  estado.paisesDisponiveis.forEach(pais => {
+    const caixaSelecao = document.getElementById(`country-${pais}`);
+    if (caixaSelecao) {
+      caixaSelecao.checked = estado.filtros.paises.includes(pais);
     }
   });
-  updateDashboard();
+  atualizarDashboard();
 }
 
-function openPeriodModal() {
-  const startDate = state.filters.dateRange.start.toISOString().split('T')[0];
-  const endDate = state.filters.dateRange.end.toISOString().split('T')[0];
+function abrirModalPeriodo() {
+  const dataInicio = estado.filtros.intervaloData.inicio.toISOString().split('T')[0];
+  const dataFim = estado.filtros.intervaloData.fim.toISOString().split('T')[0];
   
-  document.getElementById('startDate').value = startDate;
-  document.getElementById('endDate').value = endDate;
+  document.getElementById('startDate').value = dataInicio;
+  document.getElementById('endDate').value = dataFim;
 
-  openModal('periodModal');
+  abrirModal('periodModal');
 }
 
-function applyPeriodFilter() {
-  const startDate = new Date(document.getElementById('startDate').value);
-  const endDate = new Date(document.getElementById('endDate').value);
+function aplicarFiltroPeriodo() {
+  const dataInicio = new Date(document.getElementById('startDate').value);
+  const dataFim = new Date(document.getElementById('endDate').value);
 
-  if (startDate && endDate && startDate <= endDate) {
-    state.filters.dateRange.start = startDate;
-    state.filters.dateRange.end = endDate;
-    updateDashboard();
-    closeModal('periodModal');
+  if (dataInicio && dataFim && dataInicio <= dataFim) {
+    estado.filtros.intervaloData.inicio = dataInicio;
+    estado.filtros.intervaloData.fim = dataFim;
+    atualizarDashboard();
+    fecharModal('periodModal');
   } else {
     alert('Por favor, selecione um período válido.');
   }
 }
 
-function openModal(modalId) {
-  document.getElementById(modalId).classList.add('active');
+function abrirModal(idModal) {
+  document.getElementById(idModal).classList.add('active');
 }
 
-function closeModal(modalId) {
-  document.getElementById(modalId).classList.remove('active');
+function fecharModal(idModal) {
+  document.getElementById(idModal).classList.remove('active');
 }
