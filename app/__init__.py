@@ -1,5 +1,5 @@
 """
-Aplicação Flask - Radar de Acidentes
+Aplicação Flask - Incident Atlas
 Arquitetura Simplificada
 """
 from flask import Flask, g
