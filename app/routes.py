@@ -26,14 +26,14 @@ def registrar_rotas(app):
     
     # ==================== API - ACIDENTES ====================
     
-    @app.route('/api/accidents')
+    @app.route('/api/acidentes')
     def obter_acidentes():
         """Endpoint API para retornar todos os acidentes"""
         servico = ServicoAcidentes(g.bd)
         acidentes = servico.obter_todos_acidentes()
         return jsonify(acidentes)
     
-    @app.route('/api/accidents/filtered')
+    @app.route('/api/acidentes/filtrados')
     def obter_acidentes_filtrados():
         """Endpoint API para retornar acidentes filtrados com paginação"""
         servico = ServicoAcidentes(g.bd)
@@ -47,21 +47,21 @@ def registrar_rotas(app):
     
     # ==================== API - ESTATÍSTICAS ====================
     
-    @app.route('/api/statistics')
+    @app.route('/api/estatisticas')
     def obter_estatisticas():
         """Endpoint API para retornar estatísticas agregadas"""
         servico = ServicoEstatisticas(g.bd)
         estatisticas = servico.obter_todas_estatisticas()
         return jsonify(estatisticas)
     
-    @app.route('/api/safety-record')
+    @app.route('/api/recorde-seguranca')
     def obter_registro_seguranca():
         """Endpoint API para retornar dados do recorde de segurança"""
         servico = ServicoSeguranca(g.bd)
         registro = servico.obter_registro_seguranca()
         return jsonify(registro)
     
-    @app.route('/api/next-actions')
+    @app.route('/api/proximas-acoes')
     def obter_proximas_acoes():
         """Endpoint API para retornar próximas ações baseadas nos dados históricos"""
         servico = ServicoAcoes(g.bd)
@@ -70,7 +70,7 @@ def registrar_rotas(app):
     
     # ==================== API - DASHBOARD ====================
     
-    @app.route('/api/dashboard/stats')
+    @app.route('/api/dashboard/estatisticas')
     def obter_estatisticas_dashboard():
         """Endpoint API para retornar estatísticas do dashboard com filtros"""
         servico = ServicoDashboard(g.bd)
@@ -79,7 +79,7 @@ def registrar_rotas(app):
     
     # ==================== API - GRÁFICOS ====================
     
-    @app.route('/api/charts/monthly')
+    @app.route('/api/graficos/mensal')
     def obter_grafico_mensal():
         """Endpoint API para retornar dados do gráfico mensal"""
         servico = ServicoGraficos(g.bd)
@@ -87,14 +87,14 @@ def registrar_rotas(app):
         dados = servico.obter_dados_grafico_mensal(intervalo_meses)
         return jsonify(dados)
     
-    @app.route('/api/charts/sectors')
+    @app.route('/api/graficos/setores')
     def obter_grafico_setores():
         """Endpoint API para retornar dados do gráfico de setores"""
         servico = ServicoGraficos(g.bd)
         dados = servico.obter_dados_grafico_setores()
         return jsonify(dados)
     
-    @app.route('/api/charts/locations')
+    @app.route('/api/graficos/localizacoes')
     def obter_grafico_localizacoes():
         """Endpoint API para retornar dados do gráfico de localização"""
         servico = ServicoGraficos(g.bd)
@@ -102,7 +102,7 @@ def registrar_rotas(app):
         dados = servico.obter_dados_grafico_localizacoes(filtro_pais)
         return jsonify(dados)
     
-    @app.route('/api/heatmap/bodyparts')
+    @app.route('/api/mapa-calor/partes-corpo')
     def obter_mapa_calor_partes_corpo():
         """Endpoint API para retornar dados do mapa de calor"""
         servico = ServicoGraficos(g.bd)

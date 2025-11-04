@@ -46,7 +46,7 @@ function ocultarCarregamento() {
 async function inicializarDados() {
   try {
     // Buscar países disponíveis e range de datas do endpoint de estatísticas
-    const resposta = await fetch('/api/statistics');
+    const resposta = await fetch('/api/estatisticas');
     if (!resposta.ok) {
       throw new Error('Erro ao carregar estatísticas iniciais');
     }
@@ -176,7 +176,7 @@ async function atualizarDashboard() {
 
 async function atualizarCardsFiltro(stringConsulta) {
   try {
-    const resposta = await fetch(`/api/dashboard/stats?${stringConsulta}`);
+    const resposta = await fetch(`/api/dashboard/estatisticas?${stringConsulta}`);
     if (!resposta.ok) throw new Error('Erro ao buscar estatísticas');
     
     const dados = await resposta.json();
@@ -398,7 +398,7 @@ async function atualizarGraficoMensal(intervalo, stringConsulta = null) {
   if (!stringConsulta) stringConsulta = construirStringConsultaFiltros();
   
   try {
-    const resposta = await fetch(`/api/charts/monthly?${stringConsulta}&range=${intervalo}`);
+    const resposta = await fetch(`/api/graficos/mensal?${stringConsulta}&range=${intervalo}`);
     if (!resposta.ok) throw new Error('Erro ao buscar dados mensais');
     
     const dados = await resposta.json();
@@ -415,7 +415,7 @@ async function atualizarGraficoPotencial(stringConsulta = null) {
   if (!stringConsulta) stringConsulta = construirStringConsultaFiltros();
   
   try {
-    const resposta = await fetch(`/api/charts/sectors?${stringConsulta}`);
+    const resposta = await fetch(`/api/graficos/setores?${stringConsulta}`);
     if (!resposta.ok) throw new Error('Erro ao buscar dados de setores');
     
     const dados = await resposta.json();
@@ -445,7 +445,7 @@ async function atualizarGraficoLocalizacao(filtroPais, stringConsulta = null) {
   if (!stringConsulta) stringConsulta = construirStringConsultaFiltros();
   
   try {
-    const resposta = await fetch(`/api/charts/locations?${stringConsulta}&filterCountry=${filtroPais}`);
+    const resposta = await fetch(`/api/graficos/localizacoes?${stringConsulta}&filterCountry=${filtroPais}`);
     if (!resposta.ok) throw new Error('Erro ao buscar dados de localização');
     
     const dados = await resposta.json();
@@ -463,7 +463,7 @@ async function atualizarMapaCorpo(stringConsulta = null) {
   if (!stringConsulta) stringConsulta = construirStringConsultaFiltros();
   
   try {
-    const response = await fetch(`/api/heatmap/bodyparts?${queryString}`);
+    const response = await fetch(`/api/mapa-calor/partes-corpo?${stringConsulta}`);
     if (!response.ok) throw new Error('Erro ao buscar dados do mapa de calor');
     
     const result = await response.json();
@@ -536,7 +536,7 @@ async function atualizarMapaCorpo(stringConsulta = null) {
     }
     
     // Configurar tooltips customizados para o mapa de calor
-    setupBodyMapTooltips();
+    configurarTooltipsMapaCorpo();
   } catch (error) {
     console.error('Erro ao atualizar mapa de calor:', error);
   }
@@ -612,7 +612,7 @@ async function atualizarListaIncidentes(stringConsulta = null, resetarLista = tr
       parametroBusca = `&search=${encodeURIComponent(estado.incidentes.consultaBusca)}`;
     }
     
-    const resposta = await fetch(`/api/accidents/filtered?${stringConsulta}&page=${estado.incidentes.pagina}&perPage=${estado.incidentes.porPagina}${parametroBusca}`);
+    const resposta = await fetch(`/api/acidentes/filtrados?${stringConsulta}&page=${estado.incidentes.pagina}&perPage=${estado.incidentes.porPagina}${parametroBusca}`);
     if (!resposta.ok) throw new Error('Erro ao buscar lista de incidentes');
     
     const incidentes = await resposta.json();

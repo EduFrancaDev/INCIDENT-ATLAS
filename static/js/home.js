@@ -14,7 +14,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 // Carregar dados da API
 async function carregarDados() {
   try {
-    const resposta = await fetch('/api/statistics');
+    const resposta = await fetch('/api/estatisticas');
     if (!resposta.ok) throw new Error('Erro ao carregar estatísticas');
     
     dadosGlobais = await resposta.json();
@@ -132,7 +132,7 @@ function atualizarCardsContexto(dados) {
 // Atualizar estatísticas do herói
 async function atualizarContadoresSeguranca() {
   try {
-    const resposta = await fetch('/api/safety-record');
+    const resposta = await fetch('/api/recorde-seguranca');
     if (!resposta.ok) {
       throw new Error('Erro ao carregar dados de segurança');
     }
@@ -197,7 +197,7 @@ function inicializarMapaCalorCorpo(filtroGenero = 'all') {
   let parteSelecionada = null;
 
   // Construir URL com filtro de gênero
-  let url = '/api/heatmap/bodyparts';
+  let url = '/api/mapa-calor/partes-corpo';
   if (filtroGenero !== 'all') {
     const parametroGenero = filtroGenero === 'male' ? 'Homem' : 'Mulher';
     url += `?gender=${encodeURIComponent(parametroGenero)}`;
@@ -651,7 +651,7 @@ async function criarGraficoLocalizacao() {
 // Carregar próximas ações da API
 async function carregarProximasAcoes() {
   try {
-    const resposta = await fetch('/api/next-actions');
+    const resposta = await fetch('/api/proximas-acoes');
     if (!resposta.ok) throw new Error('Erro ao carregar próximas ações');
     
     const acoes = await resposta.json();
