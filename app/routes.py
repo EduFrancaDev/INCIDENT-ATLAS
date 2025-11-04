@@ -38,7 +38,7 @@ def registrar_rotas(app):
         """Endpoint API para retornar acidentes filtrados com paginação"""
         servico = ServicoAcidentes(g.bd)
         
-        pagina = int(request.args.get('page', 1))
+        pagina = int(request.args.get('page', 1)) #essa API é paginada.
         por_pagina = int(request.args.get('perPage', 10))
         consulta_busca = request.args.get('search', '').strip()
         

@@ -561,7 +561,7 @@ async function atualizarMapaCorpo(stringConsulta = null) {
   
   try {
     // Buscar dados do mapa de calor da API
-    const response = await fetch(`/api/heatmap/bodyparts?${queryString}`);
+    const response = await fetch(`/api/heatmap/bodyparts?${stringConsulta}`);
     if (!response.ok) throw new Error('Erro ao buscar dados do mapa de calor');
     
     const result = await response.json();
@@ -634,7 +634,7 @@ async function atualizarMapaCorpo(stringConsulta = null) {
     }
     
     // Configurar tooltips customizados para o mapa de calor
-    setupBodyMapTooltips();
+    configurarTooltipsMapaCorpo();
   } catch (error) {
     console.error('Erro ao atualizar mapa de calor:', error);
   }
