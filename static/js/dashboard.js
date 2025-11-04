@@ -1,70 +1,110 @@
-// Gerenciamento de Estado
+/**
+ * DASHBOARD.JS - Gerenciamento do Dashboard de Acidentes
+ * 
+ * Este arquivo controla toda a lógica do dashboard interativo, incluindo:
+ * - Gerenciamento de estado e filtros
+ * - Criação e atualização de gráficos (Chart.js)
+ * - Mapa de calor do corpo humano
+ * - Lista de incidentes com scroll infinito
+ * - Comunicação com a API backend
+ */
+
+// ==================== GERENCIAMENTO DE ESTADO ====================
+
+/**
+ * Estado global da aplicação
+ * Armazena todos os dados, filtros e configurações do dashboard
+ */
 const estado = {
+  // Filtros aplicados aos dados
   filtros: {
-    genero: { masculino: true, feminino: true },
-    paises: [],
+    genero: { masculino: true, feminino: true }, // Filtros de gênero (ambos ativos por padrão)
+    paises: [], // Lista de países selecionados
     intervaloData: {
-      inicio: null,
-      fim: null
+      inicio: null, // Data de início do período
+      fim: null     // Data de fim do período
     }
   },
-  graficos: {},
-  paisesDisponiveis: [],
+  graficos: {}, // Instâncias dos gráficos Chart.js
+  paisesDisponiveis: [], // Lista de todos os países disponíveis nos dados
+  // Controle de paginação e carregamento dos incidentes
   incidentes: {
-    dados: [],
-    pagina: 1,
-    porPagina: 20,
-    temMais: true,
-    consultaBusca: '',
-    estaCarregando: false
+    dados: [],              // Array com os dados dos incidentes
+    pagina: 1,              // Página atual
+    porPagina: 20,          // Quantidade de itens por página
+    temMais: true,          // Indica se há mais dados para carregar
+    consultaBusca: '',      // Texto de busca
+    estaCarregando: false   // Flag de loading
   }
 };
 
-// Inicializar Dashboard
+// ==================== INICIALIZAÇÃO ====================
+
+/**
+ * Inicializa o dashboard quando a página carrega
+ * Executa todas as configurações necessárias de forma assíncrona
+ */
 document.addEventListener('DOMContentLoaded', async () => {
-  mostrarCarregamento();
-  await inicializarDados();
-  inicializarFiltros();
-  inicializarGraficos();
-  inicializarModais();
-  configurarRolagemInfinitaIncidentes();
-  configurarBuscaIncidentes();
-  await atualizarDashboard();
-  ocultarCarregamento();
+  mostrarCarregamento();                      // Exibe indicador de carregamento
+  await inicializarDados();                   // Carrega dados iniciais da API
+  inicializarFiltros();                       // Configura listeners de filtros
+  inicializarGraficos();                      // Cria instâncias dos gráficos
+  inicializarModais();                        // Configura modais (popups)
+  configurarRolagemInfinitaIncidentes();      // Habilita scroll infinito na lista
+  configurarBuscaIncidentes();                // Configura campo de busca
+  await atualizarDashboard();                 // Atualiza todos os dados do dashboard
+  ocultarCarregamento();                      // Remove indicador de carregamento
 });
 
-// Funções de Carregamento
+// ==================== FUNÇÕES DE CARREGAMENTO ====================
+
+/**
+ * Exibe indicador de carregamento (loading)
+ * Pode ser expandida para mostrar spinner ou mensagem visual
+ */
 function mostrarCarregamento() {
   console.log('Carregando dados...');
 }
 
+/**
+ * Oculta indicador de carregamento
+ * Chamada quando todos os dados foram carregados
+ */
 function ocultarCarregamento() {
   console.log('Dados carregados!');
 }
 
-// Inicializar Dados
+// ==================== INICIALIZAÇÃO DE DADOS ====================
+
+/**
+ * Carrega dados iniciais da API
+ * Obtém lista de países disponíveis e intervalo de datas dos dados
+ * Configura filtros padrão (todos os países e período completo)
+ */
 async function inicializarDados() {
   try {
-    // Buscar países disponíveis e range de datas do endpoint de estatísticas
-    const resposta = await fetch('/api/estatisticas');
+    // Buscar estatísticas gerais do endpoint da API
+    const resposta = await fetch('/api/statistics');
     if (!resposta.ok) {
       throw new Error('Erro ao carregar estatísticas iniciais');
     }
     
     const estatisticas = await resposta.json();
     
-    // Extrair países únicos
+    // Extrair e ordenar países únicos disponíveis
     estado.paisesDisponiveis = estatisticas.countries.map(c => c.country).sort();
+    // Inicializar filtro com todos os países selecionados
     estado.filtros.paises = [...estado.paisesDisponiveis];
     
-    // Definir range de datas baseado nos dados de meses
+    // Definir intervalo de datas baseado nos dados mensais disponíveis
     if (estatisticas.months && estatisticas.months.length > 0) {
       const meses = estatisticas.months.map(m => m.month);
+      // Data de início: primeiro mês disponível
       estado.filtros.intervaloData.inicio = new Date(meses[0] + '-01');
       
-      // Pegar a data máxima real do banco ao invés de calcular o último dia do mês
+      // Data de fim: último mês disponível (usando dia 31 para incluir todo o mês)
       const ultimoMes = meses[meses.length - 1];
-      estado.filtros.intervaloData.fim = new Date(ultimoMes + '-31'); // Usar dia 31 para garantir incluir todo o mês
+      estado.filtros.intervaloData.fim = new Date(ultimoMes + '-31');
       
       console.log('📅 Range de datas configurado:', {
         inicio: estado.filtros.intervaloData.inicio,
@@ -73,7 +113,7 @@ async function inicializarDados() {
         fimISO: estado.filtros.intervaloData.fim.toISOString().split('T')[0]
       });
     } else {
-      // Fallback
+      // Fallback: usar valores padrão se não houver dados de meses
       estado.filtros.intervaloData.inicio = new Date('2016-01-01');
       estado.filtros.intervaloData.fim = new Date();
     }
@@ -85,20 +125,27 @@ async function inicializarDados() {
   }
 }
 
-// Construir String de Consulta de Filtros
+// ==================== CONSTRUÇÃO DE FILTROS ====================
+
+/**
+ * Constrói string de query params com base nos filtros ativos
+ * Usado para enviar filtros nas requisições à API
+ * 
+ * @returns {string} Query string formatada (ex: "gender=Homem&country=Brasil&startDate=2020-01-01")
+ */
 function construirStringConsultaFiltros() {
   const parametros = new URLSearchParams();
   
-  // Adicionar filtros de gênero
+  // Adicionar filtros de gênero aos parâmetros
   if (estado.filtros.genero.masculino) parametros.append('gender', 'Homem');
   if (estado.filtros.genero.feminino) parametros.append('gender', 'Mulher');
   
-  // Adicionar filtros de países
+  // Adicionar cada país selecionado como parâmetro separado
   estado.filtros.paises.forEach(pais => {
     parametros.append('country', pais);
   });
   
-  // Adicionar filtros de data
+  // Adicionar filtros de período (datas no formato ISO: YYYY-MM-DD)
   if (estado.filtros.intervaloData.inicio) {
     parametros.append('startDate', estado.filtros.intervaloData.inicio.toISOString().split('T')[0]);
   }
@@ -111,63 +158,88 @@ function construirStringConsultaFiltros() {
   return parametros.toString();
 }
 
-// Filter Functions
+// ==================== INICIALIZAÇÃO DE FILTROS ====================
+
+/**
+ * Configura event listeners para todos os filtros do dashboard
+ * Vincula ações de clique/mudança aos elementos HTML
+ */
 function inicializarFiltros() {
-  // Filtros de Gênero
+  // Filtro de Gênero - Mulheres
   document.getElementById('filterWomen').addEventListener('click', () => {
     alternarFiltroGenero('feminino');
   });
 
+  // Filtro de Gênero - Homens
   document.getElementById('filterMen').addEventListener('click', () => {
     alternarFiltroGenero('masculino');
   });
 
-  // Filtro de Países
+  // Filtro de Países (abre modal com lista de países)
   document.getElementById('filterCountries').addEventListener('click', () => {
     abrirModalPaises();
   });
 
-  // Filtro de Período
+  // Filtro de Período (abre modal com seletor de datas)
   document.getElementById('filterPeriod').addEventListener('click', () => {
     abrirModalPeriodo();
   });
 
-  // Filtros de Gráficos
+  // Filtro de intervalo de meses no gráfico mensal (dropdown)
   document.getElementById('monthRangeFilter').addEventListener('change', (e) => {
     atualizarGraficoMensal(e.target.value);
   });
 
+  // Filtro de país no gráfico de localização (dropdown)
   document.getElementById('countryFilter').addEventListener('change', (e) => {
     atualizarGraficoLocalizacao(e.target.value);
   });
 }
 
+/**
+ * Alterna o estado de um filtro de gênero (ativo/inativo)
+ * Atualiza a interface visual e recarrega os dados do dashboard
+ * 
+ * @param {string} genero - 'feminino' ou 'masculino'
+ */
 function alternarFiltroGenero(genero) {
+  // Inverter estado do filtro
   estado.filtros.genero[genero] = !estado.filtros.genero[genero];
   
+  // Obter elemento do cartão correspondente
   const cartao = genero === 'feminino' 
     ? document.getElementById('filterWomen')
     : document.getElementById('filterMen');
   
+  // Atualizar atributo visual (CSS) do cartão
   cartao.setAttribute('data-active', estado.filtros.genero[genero]);
+  
+  // Recarregar dashboard com novos filtros
   atualizarDashboard();
 }
 
-// Atualizar Dashboard - Agora faz requisições ao backend
+// ==================== ATUALIZAÇÃO DO DASHBOARD ====================
+
+/**
+ * Atualiza todo o dashboard com base nos filtros atuais
+ * Faz requisições ao backend para buscar dados filtrados
+ * Atualiza: cards de estatísticas, gráficos, mapa de calor e lista de incidentes
+ */
 async function atualizarDashboard() {
+  // Construir query string com filtros atuais
   const stringConsulta = construirStringConsultaFiltros();
   
   try {
-    // Atualizar cards de filtro
+    // Atualizar cards de estatísticas (gênero, países, período)
     await atualizarCardsFiltro(stringConsulta);
     
-    // Atualizar todos os gráficos
+    // Atualizar todos os gráficos (mensal, setores, localização)
     await atualizarTodosGraficos(stringConsulta);
     
-    // Atualizar mapa de calor
+    // Atualizar mapa de calor do corpo humano
     await atualizarMapaCorpo(stringConsulta);
     
-    // Atualizar lista de incidentes
+    // Atualizar lista de incidentes (com reset para página 1)
     await atualizarListaIncidentes(stringConsulta);
   } catch (erro) {
     console.error('Erro ao atualizar dashboard:', erro);
@@ -176,7 +248,7 @@ async function atualizarDashboard() {
 
 async function atualizarCardsFiltro(stringConsulta) {
   try {
-    const resposta = await fetch(`/api/dashboard/estatisticas?${stringConsulta}`);
+    const resposta = await fetch(`/api/dashboard/stats?${stringConsulta}`);
     if (!resposta.ok) throw new Error('Erro ao buscar estatísticas');
     
     const dados = await resposta.json();
@@ -210,13 +282,22 @@ async function atualizarCardsFiltro(stringConsulta) {
   }
 }
 
-// Inicialização de Gráficos
+// ==================== INICIALIZAÇÃO DE GRÁFICOS ====================
+
+/**
+ * Cria as instâncias iniciais de todos os gráficos Chart.js
+ * Os gráficos são criados vazios e depois populados com dados
+ */
 function inicializarGraficos() {
-  criarGraficoAcidentesPorMes();
-  criarGraficoPotencialAcidentes();
-  criarGraficoAcidentesPorLocal();
+  criarGraficoAcidentesPorMes();      // Gráfico de linha - tendência mensal
+  criarGraficoPotencialAcidentes();   // Gráfico de pizza - distribuição por setor
+  criarGraficoAcidentesPorLocal();    // Gráfico de barras - acidentes por localização
 }
 
+/**
+ * Cria gráfico de linha mostrando tendência de acidentes por mês
+ * Usa Chart.js para renderização
+ */
 function criarGraficoAcidentesPorMes() {
   const contexto = document.getElementById('accidentsPerMonthChart');
   estado.graficos.graficoMensal = new Chart(contexto, {
@@ -284,6 +365,10 @@ function criarGraficoAcidentesPorMes() {
   });
 }
 
+/**
+ * Cria gráfico de pizza (doughnut) mostrando distribuição de acidentes por setor
+ * Setores: Mineração, Metalurgia, Outros
+ */
 function criarGraficoPotencialAcidentes() {
   const contexto = document.getElementById('accidentPotentialChart');
   
@@ -332,6 +417,10 @@ function criarGraficoPotencialAcidentes() {
   });
 }
 
+/**
+ * Cria gráfico de barras mostrando acidentes por localização (estados/províncias)
+ * Exibe top 6 localizações com mais acidentes
+ */
 function criarGraficoAcidentesPorLocal() {
   const contexto = document.getElementById('accidentsByLocationChart');
   
@@ -398,7 +487,7 @@ async function atualizarGraficoMensal(intervalo, stringConsulta = null) {
   if (!stringConsulta) stringConsulta = construirStringConsultaFiltros();
   
   try {
-    const resposta = await fetch(`/api/graficos/mensal?${stringConsulta}&range=${intervalo}`);
+    const resposta = await fetch(`/api/charts/monthly?${stringConsulta}&range=${intervalo}`);
     if (!resposta.ok) throw new Error('Erro ao buscar dados mensais');
     
     const dados = await resposta.json();
@@ -415,7 +504,7 @@ async function atualizarGraficoPotencial(stringConsulta = null) {
   if (!stringConsulta) stringConsulta = construirStringConsultaFiltros();
   
   try {
-    const resposta = await fetch(`/api/graficos/setores?${stringConsulta}`);
+    const resposta = await fetch(`/api/charts/sectors?${stringConsulta}`);
     if (!resposta.ok) throw new Error('Erro ao buscar dados de setores');
     
     const dados = await resposta.json();
@@ -445,7 +534,7 @@ async function atualizarGraficoLocalizacao(filtroPais, stringConsulta = null) {
   if (!stringConsulta) stringConsulta = construirStringConsultaFiltros();
   
   try {
-    const resposta = await fetch(`/api/graficos/localizacoes?${stringConsulta}&filterCountry=${filtroPais}`);
+    const resposta = await fetch(`/api/charts/locations?${stringConsulta}&filterCountry=${filtroPais}`);
     if (!resposta.ok) throw new Error('Erro ao buscar dados de localização');
     
     const dados = await resposta.json();
@@ -458,12 +547,21 @@ async function atualizarGraficoLocalizacao(filtroPais, stringConsulta = null) {
   }
 }
 
-// Mapa do Corpo
+// ==================== MAPA DE CALOR DO CORPO ====================
+
+/**
+ * Atualiza mapa de calor do corpo humano com dados de acidentes
+ * Mostra quais partes do corpo foram mais afetadas
+ * Usa escala de cores para representar intensidade (amarelo → laranja → vermelho)
+ * 
+ * @param {string} stringConsulta - Query string com filtros (opcional)
+ */
 async function atualizarMapaCorpo(stringConsulta = null) {
   if (!stringConsulta) stringConsulta = construirStringConsultaFiltros();
   
   try {
-    const response = await fetch(`/api/mapa-calor/partes-corpo?${stringConsulta}`);
+    // Buscar dados do mapa de calor da API
+    const response = await fetch(`/api/heatmap/bodyparts?${queryString}`);
     if (!response.ok) throw new Error('Erro ao buscar dados do mapa de calor');
     
     const result = await response.json();
@@ -536,17 +634,21 @@ async function atualizarMapaCorpo(stringConsulta = null) {
     }
     
     // Configurar tooltips customizados para o mapa de calor
-    configurarTooltipsMapaCorpo();
+    setupBodyMapTooltips();
   } catch (error) {
     console.error('Erro ao atualizar mapa de calor:', error);
   }
 }
 
-// Configurar tooltips para o mapa de calor
+/**
+ * Configura tooltips interativos para as partes do corpo no mapa de calor
+ * Adiciona eventos de hover e clique para mostrar informações
+ */
 function configurarTooltipsMapaCorpo() {
   const dicaFerramenta = document.getElementById('body-tooltip');
   let parteSelecionada = null;
   
+  // Para cada parte do corpo no SVG
   document.querySelectorAll('.body-part').forEach(parte => {
     const contagem = parte.getAttribute('data-count') || '0';
     const nome = parte.getAttribute('data-name') || 'Desconhecido';
@@ -590,12 +692,22 @@ function configurarTooltipsMapaCorpo() {
   });
 }
 
-// Lista de Incidentes
+// ==================== LISTA DE INCIDENTES ====================
+
+/**
+ * Atualiza a lista de incidentes com paginação
+ * Suporta busca por texto e filtros
+ * Implementa scroll infinito para carregar mais dados
+ * 
+ * @param {string} stringConsulta - Query string com filtros
+ * @param {boolean} resetarLista - Se true, limpa lista e volta para página 1
+ */
 async function atualizarListaIncidentes(stringConsulta = null, resetarLista = true) {
   if (!stringConsulta) stringConsulta = construirStringConsultaFiltros();
+  // Prevenir múltiplas requisições simultâneas
   if (estado.incidentes.estaCarregando) return;
   
-  // Resetar estado se necessário
+  // Resetar estado se necessário (nova busca ou novos filtros)
   if (resetarLista) {
     estado.incidentes.pagina = 1;
     estado.incidentes.dados = [];
@@ -612,7 +724,7 @@ async function atualizarListaIncidentes(stringConsulta = null, resetarLista = tr
       parametroBusca = `&search=${encodeURIComponent(estado.incidentes.consultaBusca)}`;
     }
     
-    const resposta = await fetch(`/api/acidentes/filtrados?${stringConsulta}&page=${estado.incidentes.pagina}&perPage=${estado.incidentes.porPagina}${parametroBusca}`);
+    const resposta = await fetch(`/api/accidents/filtered?${stringConsulta}&page=${estado.incidentes.pagina}&perPage=${estado.incidentes.porPagina}${parametroBusca}`);
     if (!resposta.ok) throw new Error('Erro ao buscar lista de incidentes');
     
     const incidentes = await resposta.json();
@@ -651,75 +763,97 @@ async function atualizarListaIncidentes(stringConsulta = null, resetarLista = tr
   }
 }
 
-// Scroll infinito para incidentes
+/**
+ * Configura scroll infinito na lista de incidentes
+ * Carrega mais dados automaticamente quando usuário rola até o fim da lista
+ */
 function configurarRolagemInfinitaIncidentes() {
   const containerLista = document.getElementById('incidentsList');
   
+  // Listener de scroll
   containerLista.addEventListener('scroll', () => {
+    // Não carregar se já está carregando ou não há mais dados
     if (estado.incidentes.estaCarregando || !estado.incidentes.temMais) return;
     
-    const alturaRolagem = containerLista.scrollHeight;
-    const topoRolagem = containerLista.scrollTop;
-    const alturaCliente = containerLista.clientHeight;
+    // Calcular posição do scroll
+    const alturaRolagem = containerLista.scrollHeight;  // Altura total do conteúdo
+    const topoRolagem = containerLista.scrollTop;       // Posição atual do scroll
+    const alturaCliente = containerLista.clientHeight;  // Altura visível
     
-    // Carregar mais quando chegar a 80% do scroll
+    // Carregar mais quando chegar a 80% do scroll (antes de chegar no fim)
     if (topoRolagem + alturaCliente >= alturaRolagem * 0.8) {
-      estado.incidentes.pagina++;
-      atualizarListaIncidentes(null, false);
+      estado.incidentes.pagina++;                      // Incrementar página
+      atualizarListaIncidentes(null, false);           // Carregar próxima página (sem resetar)
     }
   });
 }
 
-// Busca de incidentes
+/**
+ * Configura campo de busca de incidentes
+ * Implementa debounce para evitar requisições excessivas
+ */
 function configurarBuscaIncidentes() {
   const campoBusca = document.getElementById('incidentsSearch');
   let temporizadorBusca;
   
+  // Listener de input (dispara a cada tecla digitada)
   campoBusca.addEventListener('input', (e) => {
+    // Cancelar busca anterior (debounce)
     clearTimeout(temporizadorBusca);
+    
+    // Agendar nova busca após 500ms de inatividade
     temporizadorBusca = setTimeout(() => {
-      estado.incidentes.consultaBusca = e.target.value.trim();
-      atualizarListaIncidentes(null, true);
-    }, 500); // Debounce de 500ms
+      estado.incidentes.consultaBusca = e.target.value.trim();  // Salvar texto de busca
+      atualizarListaIncidentes(null, true);                     // Buscar com reset
+    }, 500); // Debounce de 500ms (aguarda usuário parar de digitar)
   });
 }
 
-// Funções de Modais
+// ==================== MODAIS (POPUPS) ====================
+
+/**
+ * Inicializa todos os modais da aplicação
+ * Configura event listeners para abrir, fechar e interagir com modais
+ */
 function inicializarModais() {
-  // Modal de Incidente
+  // Modal de Detalhes do Incidente - Botão fechar
   document.getElementById('modalClose').addEventListener('click', () => {
     fecharModal('incidentModal');
   });
 
-  // Modal de Países
+  // Modal de Filtro de Países - Botão fechar
   document.getElementById('countriesModalClose').addEventListener('click', () => {
     fecharModal('countriesModal');
   });
 
+  // Modal de Filtro de Países - Botão "Selecionar Todos"
   document.getElementById('countriesSelectAll').addEventListener('click', () => {
-    estado.filtros.paises = [...estado.paisesDisponiveis];
-    atualizarCheckboxesPaises();
+    estado.filtros.paises = [...estado.paisesDisponiveis];  // Copiar array de países
+    atualizarCheckboxesPaises();                            // Atualizar UI
   });
 
+  // Modal de Filtro de Países - Botão "Limpar Todos"
   document.getElementById('countriesClearAll').addEventListener('click', () => {
-    estado.filtros.paises = [];
-    atualizarCheckboxesPaises();
+    estado.filtros.paises = [];                // Limpar seleção
+    atualizarCheckboxesPaises();               // Atualizar UI
   });
 
-  // Modal de Período
+  // Modal de Filtro de Período - Botão fechar
   document.getElementById('periodModalClose').addEventListener('click', () => {
     fecharModal('periodModal');
   });
 
+  // Modal de Filtro de Período - Botão cancelar
   document.getElementById('periodCancel').addEventListener('click', () => {
     fecharModal('periodModal');
   });
 
+  // Modal de Filtro de Período - Botão aplicar
   document.getElementById('periodApply').addEventListener('click', () => {
     aplicarFiltroPeriodo();
   });
 
-  // Close modals on background click
+  // Fechar modal ao clicar no fundo escuro (backdrop)
   window.addEventListener('click', (e) => {
     if (e.target.classList.contains('modal')) {
       e.target.classList.remove('active');
@@ -727,10 +861,19 @@ function inicializarModais() {
   });
 }
 
+/**
+ * Abre modal com detalhes completos de um incidente específico
+ * Preenche todos os campos do modal com dados do incidente
+ * 
+ * @param {number} id - ID do incidente a ser exibido
+ * @param {Array} incidentes - Array com todos os incidentes carregados
+ */
 function abrirModalIncidente(id, incidentes) {
+  // Buscar incidente pelo ID
   const incidente = incidentes.find(i => i.id === id);
-  if (!incidente) return;
+  if (!incidente) return;  // Incidente não encontrado
 
+  // Preencher campos do modal com dados do incidente
   document.getElementById('modalId').textContent = `#${String(incidente.id).padStart(3, '0')}`;
   document.getElementById('modalDate').textContent = new Date(incidente.date).toLocaleDateString('pt-BR');
   document.getElementById('modalLocation').textContent = incidente.local;
@@ -740,6 +883,7 @@ function abrirModalIncidente(id, incidentes) {
   document.getElementById('modalRisk').textContent = incidente.criticalRisk;
   document.getElementById('modalDescription').textContent = incidente.description;
 
+  // Abrir modal
   abrirModal('incidentModal');
 }
 
@@ -806,10 +950,18 @@ function aplicarFiltroPeriodo() {
   }
 }
 
+/**
+ * Abre um modal adicionando classe CSS 'active'
+ * @param {string} idModal - ID do elemento modal
+ */
 function abrirModal(idModal) {
   document.getElementById(idModal).classList.add('active');
 }
 
+/**
+ * Fecha um modal removendo classe CSS 'active'
+ * @param {string} idModal - ID do elemento modal
+ */
 function fecharModal(idModal) {
   document.getElementById(idModal).classList.remove('active');
 }

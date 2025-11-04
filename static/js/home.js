@@ -1,39 +1,72 @@
-// Armazenamento global de dados
+/**
+ * HOME.JS - Gerenciamento da Página Inicial (Home)
+ * 
+ * Este arquivo controla toda a lógica da página inicial, incluindo:
+ * - Carregamento e exibição de estatísticas gerais
+ * - Gráficos de tendência mensal e localização
+ * - Mapa de calor do corpo humano com filtro de gênero
+ * - Contadores de segurança (dias sem acidentes graves)
+ * - Próximas ações recomendadas
+ * - Cards de contexto operacional
+ */
+
+// ==================== ESTADO GLOBAL ====================
+
+/**
+ * Armazena dados carregados da API
+ * Usado para evitar requisições repetidas
+ */
 let dadosGlobais = null;
 
-// Inicializar página inicial
+// ==================== INICIALIZAÇÃO ====================
+
+/**
+ * Inicializa a página inicial quando o DOM está pronto
+ * Carrega todos os dados e configura componentes interativos
+ */
 document.addEventListener('DOMContentLoaded', async () => {
-  await carregarDados();
-  inicializarGraficos();
-  inicializarMapaCalorCorpo();
-  configurarFiltroGenero();
-  configurarTooltipsContexto();
-  await carregarProximasAcoes();
+  await carregarDados();              // Carregar dados da API
+  inicializarGraficos();              // Criar gráficos Chart.js
+  inicializarMapaCalorCorpo();        // Configurar mapa de calor do corpo
+  configurarFiltroGenero();           // Configurar botões de filtro de gênero
+  configurarTooltipsContexto();       // Configurar tooltips dos cards
+  await carregarProximasAcoes();      // Carregar ações recomendadas
 });
 
-// Carregar dados da API
+// ==================== CARREGAMENTO DE DADOS ====================
+
+/**
+ * Carrega dados iniciais da API e atualiza todas as seções da página
+ * Faz requisição ao endpoint /api/statistics para obter estatísticas gerais
+ */
 async function carregarDados() {
   try {
-    const resposta = await fetch('/api/estatisticas');
+    // Buscar estatísticas gerais da API
+    const resposta = await fetch('/api/statistics');
     if (!resposta.ok) throw new Error('Erro ao carregar estatísticas');
     
     dadosGlobais = await resposta.json();
     
-    // Atualizar todas as seções
-    atualizarSecaoHeroi(dadosGlobais);
-    atualizarCardsContexto(dadosGlobais);
-    await atualizarContadoresSeguranca();
+    // Atualizar todas as seções da página com os dados carregados
+    atualizarSecaoHeroi(dadosGlobais);          // Atualizar seção hero (título principal)
+    atualizarCardsContexto(dadosGlobais);       // Atualizar cards de contexto operacional
+    await atualizarContadoresSeguranca();       // Atualizar contadores de dias sem acidentes
     
   } catch (erro) {
     console.error('Erro ao carregar dados:', erro);
   }
 }
 
+/**
+ * Atualiza a seção hero (título principal) com o total de acidentes
+ * 
+ * @param {Object} dados - Dados estatísticos da API
+ */
 function atualizarSecaoHeroi(dados) {
-  // Calcular total de acidentes
+  // Calcular total de acidentes somando dados de gênero
   const total = dados.gender.reduce((soma, g) => soma + g.count, 0);
   
-  // Atualizar título e subtítulo do herói
+  // Atualizar elementos HTML com o total
   document.getElementById('totalAccidents').textContent = `${total} acidentes`;
   document.getElementById('heroSubtitle').textContent = `${total} histórias. 1 missão.`;
 }
@@ -129,17 +162,21 @@ function atualizarCardsContexto(dados) {
   }
 }
 
-// Atualizar estatísticas do herói
+/**
+ * Atualiza contadores de segurança
+ * Mostra dias desde último acidente grave e progresso até o recorde
+ */
 async function atualizarContadoresSeguranca() {
   try {
-    const resposta = await fetch('/api/recorde-seguranca');
+    // Buscar dados de segurança da API
+    const resposta = await fetch('/api/safety-record');
     if (!resposta.ok) {
       throw new Error('Erro ao carregar dados de segurança');
     }
     
     const dados = await resposta.json();
-    const diasAtuais = dados.currentDaysSinceLast;
-    const diasRecorde = dados.recordDays;
+    const diasAtuais = dados.currentDaysSinceLast;    // Dias desde último acidente grave
+    const diasRecorde = dados.recordDays;             // Recorde histórico de dias
     
     document.getElementById('daysSinceAccident').textContent = diasAtuais;
     document.getElementById('recordDays').textContent = diasRecorde;
@@ -168,7 +205,12 @@ async function atualizarContadoresSeguranca() {
   }
 }
 
-// Mapeamento de partes do corpo
+// ==================== MAPA DE CALOR DO CORPO ====================
+
+/**
+ * Mapeamento de nomes de partes do corpo para IDs dos elementos SVG
+ * Usado para atualizar cores do mapa de calor baseado nos dados de acidentes
+ */
 const mapeamentoPartesCorpo = {
   'Face': 'face',
   'Rosto': 'face',
@@ -182,22 +224,28 @@ const mapeamentoPartesCorpo = {
   'Braço': 'right-arm',
   'Mão Esquerda': 'left-hand',
   'Mão Direita': 'right-hand',
-  'Mãos': 'left-hand', // Também atualizará right-hand
+  'Mãos': 'left-hand',        // Também atualizará right-hand
   'Perna Esquerda': 'left-leg',
   'Perna Direita': 'right-leg',
   'Perna': 'right-leg',
   'Pé Esquerdo': 'left-foot',
   'Pé Direito': 'right-foot',
-  'Pés': 'left-foot' // Também atualizará right-foot
+  'Pés': 'left-foot'          // Também atualizará right-foot
 };
 
-// Inicializar mapa de calor do corpo
+/**
+ * Inicializa o mapa de calor do corpo humano
+ * Busca dados da API e aplica cores baseadas na quantidade de acidentes
+ * Suporta filtro de gênero (todos, homens ou mulheres)
+ * 
+ * @param {string} filtroGenero - 'all', 'male' ou 'female'
+ */
 function inicializarMapaCalorCorpo(filtroGenero = 'all') {
   const dicaFerramenta = document.getElementById('body-tooltip');
   let parteSelecionada = null;
 
-  // Construir URL com filtro de gênero
-  let url = '/api/mapa-calor/partes-corpo';
+  // Construir URL da API com filtro de gênero se necessário
+  let url = '/api/heatmap/bodyparts';
   if (filtroGenero !== 'all') {
     const parametroGenero = filtroGenero === 'male' ? 'Homem' : 'Mulher';
     url += `?gender=${encodeURIComponent(parametroGenero)}`;
@@ -363,30 +411,43 @@ function inicializarMapaCalorCorpo(filtroGenero = 'all') {
     .catch(erro => console.error('Erro ao carregar dados do heatmap:', erro));
 }
 
-// Configurar botões de filtro de gênero
+/**
+ * Configura botões de filtro de gênero do mapa de calor
+ * Permite filtrar visualização por: Todos, Homens ou Mulheres
+ */
 function configurarFiltroGenero() {
   const botoesFiltro = document.querySelectorAll('.filter-btn');
   
+  // Para cada botão de filtro
   botoesFiltro.forEach(botao => {
     botao.addEventListener('click', () => {
-      // Remover classe active de todos os botões
+      // Remover classe 'active' de todos os botões (desmarcar todos)
       botoesFiltro.forEach(btn => btn.classList.remove('active'));
       
-      // Adicionar classe active ao botão clicado
+      // Adicionar classe 'active' ao botão clicado (marcar selecionado)
       botao.classList.add('active');
       
-      // Obter gênero selecionado
+      // Obter gênero selecionado do atributo data-gender
       const genero = botao.getAttribute('data-gender');
       
-      // Recarregar heatmap com filtro
+      // Recarregar mapa de calor com o filtro aplicado
       inicializarMapaCalorCorpo(genero);
     });
   });
 }
 
-// Configurar tooltips dos cards de contexto para mobile (suporte a toque)
+// ==================== TOOLTIPS ====================
+
+/**
+ * Configura tooltips dos cards de contexto para dispositivos móveis
+ * Em desktop, tooltips funcionam via CSS :hover
+ * Em mobile, tooltips são ativados por toque (clique)
+ */
 function configurarTooltipsContexto() {
-  // Verificar se é dispositivo touch
+  /**
+   * Detecta se o dispositivo suporta toque (touch)
+   * @returns {boolean} true se for dispositivo touch, false se for desktop
+   */
   const eDispositivoToque = () => {
     return ('ontouchstart' in window) || 
            (navigator.maxTouchPoints > 0) || 
@@ -395,7 +456,7 @@ function configurarTooltipsContexto() {
   
   // Apenas adicionar comportamento de clique em dispositivos touch
   if (!eDispositivoToque()) {
-    return; // Em desktop, deixar o CSS hover funcionar naturalmente
+    return; // Em desktop, deixar o CSS :hover funcionar naturalmente
   }
   
   const cardsContexto = document.querySelectorAll('.context-card');
@@ -452,20 +513,30 @@ function configurarTooltipsContexto() {
   });
 }
 
-// Inicializar gráficos
+// ==================== GRÁFICOS ====================
+
+/**
+ * Inicializa todos os gráficos da página inicial
+ * Cria instâncias Chart.js para os gráficos de tendência e localização
+ */
 function inicializarGraficos() {
-  criarGraficoTendenciaMensal();
-  criarGraficoLocalizacao();
+  criarGraficoTendenciaMensal();    // Gráfico de linha - acidentes por mês
+  criarGraficoLocalizacao();        // Gráfico de barras - acidentes por local
 }
 
+/**
+ * Cria gráfico de linha mostrando tendência mensal de acidentes
+ * Usa dados já carregados em dadosGlobais.months
+ */
 async function criarGraficoTendenciaMensal() {
   try {
-    // Usar a API de estatísticas para obter dados mensais
+    // Verificar se dados mensais estão disponíveis
     if (!dadosGlobais || !dadosGlobais.months) {
       console.error('Dados mensais não disponíveis');
       return;
     }
     
+    // Array com abreviações dos meses em português
     const nomesMeses = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 
                         'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
     
@@ -559,18 +630,22 @@ async function criarGraficoTendenciaMensal() {
   }
 }
 
+/**
+ * Cria gráfico de barras mostrando acidentes por localização
+ * Exibe top 6 localizações com mais acidentes
+ */
 async function criarGraficoLocalizacao() {
   try {
-    // Usar a API de estatísticas para obter dados de localização
+    // Verificar se dados de localização estão disponíveis
     if (!dadosGlobais || !dadosGlobais.locations) {
       console.error('Dados de localização não disponíveis');
       return;
     }
     
-    // Obter top 6 localizações
+    // Obter top 6 localizações com mais acidentes
     const topLocalizacoes = dadosGlobais.locations.slice(0, 6);
-    const rotulos = topLocalizacoes.map(l => l.local);
-    const dados = topLocalizacoes.map(l => l.count);
+    const rotulos = topLocalizacoes.map(l => l.local);    // Nomes das localizações
+    const dados = topLocalizacoes.map(l => l.count);      // Contagem de acidentes
     
     // Encontrar localização máxima para insights
     const localizacaoMaxima = topLocalizacoes[0];
@@ -648,10 +723,17 @@ async function criarGraficoLocalizacao() {
   }
 }
 
-// Carregar próximas ações da API
+// ==================== PRÓXIMAS AÇÕES ====================
+
+/**
+ * Carrega e exibe próximas ações recomendadas da API
+ * Ações são geradas baseadas em análise dos dados de acidentes
+ * Exibe cards com prioridade, localização, responsável e prazo
+ */
 async function carregarProximasAcoes() {
   try {
-    const resposta = await fetch('/api/proximas-acoes');
+    // Buscar ações da API
+    const resposta = await fetch('/api/next-actions');
     if (!resposta.ok) throw new Error('Erro ao carregar próximas ações');
     
     const acoes = await resposta.json();
@@ -662,7 +744,7 @@ async function carregarProximasAcoes() {
     // Limpar estado de carregamento
     listaAcoes.innerHTML = '';
     
-    // Rótulos de prioridade em português
+    // Mapeamento de prioridades para português
     const rotulosPrioridade = {
       'urgent': 'Urgente',
       'high': 'Alta',
@@ -670,7 +752,7 @@ async function carregarProximasAcoes() {
       'low': 'Baixa'
     };
     
-    // Rótulos de status em português
+    // Mapeamento de status para português
     const rotulosStatus = {
       'in-progress': 'Em andamento',
       'planned': 'Planejado',
